@@ -5,7 +5,7 @@ import {
   publicPlayer,
   Player,
 } from "../../packages/game-rules";
-import { roomCommand, roomPublic, Room } from "../../packages/game-rules/rooms";
+import { leaveRoom, roomCommand, roomPublic, Room } from "../../packages/game-rules/rooms";
 import { lessons, gate } from "../../packages/curriculum";
 let n = 0;
 const command = (type: string, data = {}) => ({
@@ -31,6 +31,44 @@ function player(i: number) {
   ).player;
 }
 describe("private 2–4 player sessions", () => {
+  const roomFor = (players: Player[], turn = 1): Room => ({
+    code: "ROOM1234", host: players[0].id,
+    members: players.map((p) => p.id), ready: players.map((p) => p.id),
+    started: true, turn, round: 3, reactions: [],
+  });
+  for (const departing of [0, 2])
+    it(`preserves the current actor when finished seat ${departing} leaves`, () => {
+      const players = [player(0), player(1), player(2)];
+      players[departing].game!.phase = "reflection";
+      const room = roomFor(players);
+      const result = leaveRoom(room, players, players[departing].id);
+      expect(result.members[result.turn]).toBe("p1");
+      expect(result.round).toBe(3);
+      expect(result.ready).not.toContain(players[departing].id);
+      expect(room.members).toEqual(["p0", "p1", "p2"]);
+      expect(room.turn).toBe(1);
+      expect(() => roomCommand(result, players, "p1", command("roll"), 23)).not.toThrow();
+    });
+  it("skips finished seats when the current finished member leaves", () => {
+    const players = [player(0), player(1), player(2), player(3)];
+    players[1].game!.phase = "reflection";
+    players[2].game!.phase = "village";
+    const result = leaveRoom(roomFor(players), players, "p1");
+    expect(result.members[result.turn]).toBe("p3");
+    expect(result.host).toBe("p0");
+  });
+  it("does not let an active or paused player forfeit without a recovery policy", () => {
+    const players = [player(0), player(1)];
+    players[1].paused = true;
+    expect(() => leaveRoom(roomFor(players), players, "p1")).toThrow("Finish your lap");
+    expect(() => leaveRoom(roomFor(players), players, "outsider")).toThrow("not in");
+  });
+  it("leaves a valid empty room after the final finished member leaves", () => {
+    const players = [player(0)];
+    players[0].game!.phase = "village";
+    const result = leaveRoom(roomFor(players, 0), players, "p0");
+    expect(result).toMatchObject({ members: [], ready: [], host: null, turn: 0 });
+  });
   for (const count of [2, 4])
     it(`completes ${count}-player rounds with independent money and no skipped turns`, () => {
       let players = Array.from({ length: count }, (_, i) => player(i));

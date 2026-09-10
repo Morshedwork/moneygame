@@ -36,7 +36,7 @@ export function friendlyError(error: any) {
   if (/configuration-not-found|operation-not-allowed/.test(code))
     return "Firebase sign-in is not enabled yet. The project owner needs to enable Email/Password in Firebase Authentication. You can still try Practice Adventure.";
   if (/network-request-failed|unavailable|internal/.test(code))
-    return "The cloud service is unavailable. Check your connection, or try Practice Adventure. Your cloud progress has not been changed.";
+    return "The cloud service is unavailable. We could not confirm whether your last action was saved. Reconnect and check your progress before trying again.";
   if (/invalid-credential|wrong-password|user-not-found/.test(code))
     return "That email and password did not match. Please try again or reset your password.";
   if (/email-already-in-use/.test(code))

@@ -9,7 +9,7 @@ import {
   safeName,
   Player,
 } from "../../packages/game-rules";
-import { roomCommand } from "../../packages/game-rules/rooms";
+import { leaveRoom, roomCommand } from "../../packages/game-rules/rooms";
 initializeApp();
 const db = getFirestore();
 const fail = (message: string) => {
@@ -306,12 +306,7 @@ export const leadAction = onCall(
             r.started = true;
           }
           if (operation === "leaveRoom") {
-            if (r.started && p.game?.phase === "board")
-              fail("Finish your lap before leaving this game.");
-            r.members = r.members.filter((id: string) => id !== uid);
-            r.ready = r.ready.filter((id: string) => id !== uid);
-            r.host = r.members[0] || null;
-            r.turn = Math.min(r.turn, Math.max(0, r.members.length - 1));
+            Object.assign(r, leaveRoom(r, players, uid));
             players = players.filter((x) => x.id !== uid);
             tx.delete(member);
           }

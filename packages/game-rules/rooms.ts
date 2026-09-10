@@ -24,6 +24,38 @@ export function roomPublic(room: Room, players: Player[]) {
       })),
   };
 }
+/** Remove an eligible member without transferring somebody else's live turn. */
+export function leaveRoom(room: Room, roster: Player[], actor: string): Room {
+  const departing = roster.find((p) => p.id === actor);
+  if (!departing || !room.members.includes(actor))
+    throw new Error("You are not in this room.");
+  if (room.started && departing.game?.phase === "board")
+    throw new Error("Finish your lap before leaving this game.");
+
+  const r = structuredClone(room);
+  const currentActor = room.members[room.turn];
+  r.members = room.members.filter((id) => id !== actor);
+  r.ready = room.ready.filter((id) => id !== actor);
+  r.host = room.host === actor ? r.members[0] || null : room.host;
+  const current = roster.find((p) => p.id === currentActor);
+  if (currentActor !== actor && r.members.includes(currentActor) &&
+      (!room.started || current?.game?.phase === "board")) {
+    r.turn = r.members.indexOf(currentActor);
+    return r;
+  }
+  // The departing/current member may already have completed the lap. Find the
+  // next live actor in original seat order, skipping other finished members.
+  for (let step = 1; step <= room.members.length; step++) {
+    const candidate = room.members[(room.turn + step) % room.members.length];
+    if (r.members.includes(candidate) && (!room.started ||
+        roster.find((p) => p.id === candidate)?.game?.phase === "board")) {
+      r.turn = r.members.indexOf(candidate);
+      return r;
+    }
+  }
+  r.turn = 0;
+  return r;
+}
 export function roomCommand(
   room: Room,
   roster: Player[],

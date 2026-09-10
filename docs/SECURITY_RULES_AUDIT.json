@@ -1,0 +1,16 @@
+{
+  "score": 5,
+  "summary": "Static assessment of firestore.rules only: client writes are denied on every collection; private player state is unreadable to clients; public views require owner identity, server-maintained parent linkage or a trusted admin claim; membership and room-view reads require the corresponding identity or membership. This is not a production security certification: emulator and deployed-rule enforcement have not been verified, and callable authorization, guardian identity and abuse protections require separate work.",
+  "findings": [],
+  "scope": "The tracked firestore.rules source, not the complete application or deployed Firebase project.",
+  "verification": {
+    "method": "Static source review against firebase-security-rules-auditor checklist",
+    "emulatorTests": "not run",
+    "deployedRules": "not verified; current owner CLI authorization returned HTTP 401",
+    "updateBypass": "No client create/update/delete permission is granted.",
+    "authority": "Admin claim is token-based; parent/member arrays are written only through the server.",
+    "businessAccess": "Expected owner, linked parent, admin and member read paths exist. Actual query behavior needs emulator tests.",
+    "typeAndSizeLimits": "Direct writes are denied, so client field/type/size mutation is denied by these rules. Admin SDK writes bypass rules and require server validation and bounded collection growth.",
+    "ownership": "Every client-readable path checks authenticated UID, trusted claim or server-maintained linkage. All other paths default to deny."
+  }
+}
