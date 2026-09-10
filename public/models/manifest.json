@@ -1,0 +1,384 @@
+{
+  "version": 1,
+  "generator": "tools/blender/build_assets.py",
+  "blender": "5.2.1 LTS",
+  "assets": [
+    {
+      "id": "lido",
+      "file": "/models/lido.glb",
+      "source": "assets/source/blender/lido.blend",
+      "triangles": 7940,
+      "bytes": 399700,
+      "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Wave",
+        "Talk",
+        "Explain",
+        "Point",
+        "Think",
+        "Ask",
+        "Encourage",
+        "Celebrate",
+        "GentleConcern",
+        "Sit",
+        "Stand",
+        "LookAtPlayer",
+        "LookAtBoard",
+        "Serve",
+        "Interact"
+      ]
+    },
+    {
+      "id": "prena",
+      "file": "/models/prena.glb",
+      "source": "assets/source/blender/prena.blend",
+      "triangles": 11428,
+      "bytes": 808268,
+      "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Wave",
+        "Talk",
+        "Explain",
+        "Point",
+        "Think",
+        "Ask",
+        "Encourage",
+        "Celebrate",
+        "GentleConcern",
+        "Sit",
+        "Stand",
+        "LookAtPlayer",
+        "LookAtBoard",
+        "Serve",
+        "Interact"
+      ]
+    },
+    {
+      "id": "oty",
+      "file": "/models/oty.glb",
+      "source": "assets/source/blender/oty.blend",
+      "triangles": 8452,
+      "bytes": 459988,
+      "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Wave",
+        "Talk",
+        "Explain",
+        "Point",
+        "Think",
+        "Ask",
+        "Encourage",
+        "Celebrate",
+        "GentleConcern",
+        "Sit",
+        "Stand",
+        "LookAtPlayer",
+        "LookAtBoard",
+        "Serve",
+        "Interact"
+      ]
+    },
+    {
+      "id": "diva",
+      "file": "/models/diva.glb",
+      "source": "assets/source/blender/diva.blend",
+      "triangles": 8788,
+      "bytes": 439388,
+      "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Wave",
+        "Talk",
+        "Explain",
+        "Point",
+        "Think",
+        "Ask",
+        "Encourage",
+        "Celebrate",
+        "GentleConcern",
+        "Sit",
+        "Stand",
+        "LookAtPlayer",
+        "LookAtBoard",
+        "Serve",
+        "Interact"
+      ]
+    },
+    {
+      "id": "sparko",
+      "file": "/models/sparko.glb",
+      "source": "assets/source/blender/sparko.blend",
+      "triangles": 7760,
+      "bytes": 390708,
+      "animations": [
+        "Idle",
+        "Walk",
+        "Run",
+        "Wave",
+        "Talk",
+        "Explain",
+        "Point",
+        "Think",
+        "Ask",
+        "Encourage",
+        "Celebrate",
+        "GentleConcern",
+        "Sit",
+        "Stand",
+        "LookAtPlayer",
+        "LookAtBoard",
+        "Serve",
+        "Interact"
+      ]
+    },
+    {
+      "id": "yatai-village",
+      "file": "/models/yatai-village.glb",
+      "source": "assets/source/blender/yatai-village.blend",
+      "triangles": 127556,
+      "bytes": 7066212,
+      "animations": []
+    },
+    {
+      "id": "lead-die",
+      "file": "/models/lead-die.glb",
+      "source": "assets/source/blender/lead-die.blend",
+      "triangles": 3636,
+      "bytes": 112468,
+      "animations": []
+    },
+    {
+      "id": "lead-coin",
+      "file": "/models/lead-coin.glb",
+      "source": "assets/source/blender/lead-coin.blend",
+      "triangles": 2000,
+      "bytes": 131796,
+      "animations": []
+    }
+  ],
+  "colliders": [
+    {
+      "x": 0,
+      "z": 0,
+      "w": 4,
+      "d": 2.8
+    },
+    {
+      "x": -18,
+      "z": 7,
+      "w": 4,
+      "d": 2.8
+    },
+    {
+      "x": 18,
+      "z": -6,
+      "w": 4,
+      "d": 2.8
+    },
+    {
+      "x": 18,
+      "z": 11,
+      "w": 4,
+      "d": 2.8
+    },
+    {
+      "x": -17,
+      "z": -14,
+      "w": 4,
+      "d": 2.8
+    },
+    {
+      "x": 0,
+      "z": -21,
+      "w": 7.4,
+      "d": 4.9
+    },
+    {
+      "x": -19,
+      "z": -3,
+      "w": 5.4,
+      "d": 4.4
+    },
+    {
+      "x": 20,
+      "z": -17,
+      "w": 5.4,
+      "d": 4.4
+    },
+    {
+      "x": -27,
+      "z": 17,
+      "w": 4.4,
+      "d": 4.4
+    },
+    {
+      "x": 27,
+      "z": 21,
+      "w": 4.4,
+      "d": 4.4
+    },
+    {
+      "x": -19,
+      "z": 19,
+      "w": 6.4,
+      "d": 4
+    },
+    {
+      "x": -6,
+      "z": -4,
+      "w": 0.7,
+      "d": 0.7
+    },
+    {
+      "x": 6,
+      "z": -5,
+      "w": 0.7,
+      "d": 0.7
+    },
+    {
+      "x": -7,
+      "z": 5,
+      "w": 0.7,
+      "d": 0.7
+    },
+    {
+      "x": 7,
+      "z": 5,
+      "w": 0.7,
+      "d": 0.7
+    },
+    {
+      "x": 17,
+      "z": 3,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": -24,
+      "z": 7,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": -25,
+      "z": -12,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": 24,
+      "z": 8,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": -12,
+      "z": -24,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": 11,
+      "z": -23,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": -30,
+      "z": -22,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": 30,
+      "z": -23,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": -28,
+      "z": 25,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": 29,
+      "z": 25,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": 12,
+      "z": 23,
+      "w": 0.84,
+      "d": 0.84
+    },
+    {
+      "x": -11,
+      "z": 25,
+      "w": 0.84,
+      "d": 0.84
+    }
+  ],
+  "spawns": {
+    "player": [
+      0,
+      0,
+      16
+    ]
+  },
+  "interactions": [
+    {
+      "id": "bento",
+      "name": "Bento & Co.",
+      "position": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "id": "bank",
+      "name": "Village Bank",
+      "position": [
+        -17,
+        0,
+        -3
+      ]
+    },
+    {
+      "id": "town",
+      "name": "Town Hall",
+      "position": [
+        0,
+        0,
+        -18
+      ]
+    },
+    {
+      "id": "garden",
+      "name": "Fortune Garden",
+      "position": [
+        19,
+        0,
+        4
+      ]
+    },
+    {
+      "id": "stage",
+      "name": "Festival Plaza",
+      "position": [
+        -17,
+        0,
+        15
+      ]
+    }
+  ]
+}

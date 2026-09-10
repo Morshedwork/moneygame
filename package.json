@@ -1,0 +1,48 @@
+{
+  "name": "lead-money-game",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build && npm run build:server",
+    "build:server": "node tools/build-server.mjs",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:multiplayer": "vitest run tests/multiplayer",
+    "server:dev": "npm run build:server && npx firebase-tools emulators:start --only auth,firestore,functions --project lead-57c78",
+    "blender:build": "node tools/blender/run.mjs",
+    "blender:headless": "node tools/blender/headless.mjs",
+    "blender:props": "node tools/blender/headless.mjs tools/blender/build_props.py",
+    "blender:validate": "node tools/validation/assets.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.3.0",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^13.5.0",
+    "firebase-functions": "^6.4.0",
+    "lucide-react": "^0.468.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-router-dom": "^7.8.2",
+    "three": "^0.180.0",
+    "zustand": "^5.0.8"
+  },
+  "overrides": {
+    "uuid": "^11.1.1",
+    "qs": "^6.16.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@types/three": "^0.180.0",
+    "@vitejs/plugin-react": "^5.0.2",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "vitest": "^4.1.11"
+  }
+}
