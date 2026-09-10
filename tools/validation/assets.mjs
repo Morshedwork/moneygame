@@ -24,7 +24,7 @@ for (const asset of manifest.assets) {
     `${asset.id}: ${json.meshes.length} meshes, ${(json.animations || []).length} clips, ${(data.length / 1048576).toFixed(2)} MB`,
   );
 }
-for (const required of ["lido", "prena", "oty", "diva", "sparko", "yatai-village", "lead-die", "lead-coin"])
+for (const required of ["lido", "prena", "oty", "diva", "sparko", "yatai-village", "yatai-board", "lead-die", "lead-coin"])
   assert.ok(manifest.assets.some((asset) => asset.id === required), required + " is in the manifest");
 assert.ok(manifest.colliders.length > 15);
 console.log("All Blender exports validated.");

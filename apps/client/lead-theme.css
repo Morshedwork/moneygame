@@ -15,7 +15,7 @@
   color: var(--lead-ink);
   background: #fcfaff;
 }
-body { background: #fcfaff; }
+body { background: #faf7f0; }
 button:focus-visible, a:focus-visible, input:focus-visible,
 textarea:focus-visible, select:focus-visible { outline: 3px solid var(--lead-action); }
 .brand { color: var(--lead-ink); }
@@ -59,6 +59,10 @@ textarea:focus-visible, select:focus-visible { outline: 3px solid var(--lead-act
   text-decoration-skip-ink: none;
 }
 .hero-world { border: 5px solid white; box-shadow: 0 14px 42px #6847b511; background: #d2edf4; }
+.hero .eyebrow { color: #963f38; }
+.hero h1 em { color: #263d60; }
+.hero-world { border-color: #fdfaf2; box-shadow: 0 16px 48px #263d6020; }
+.world-label { border-top: 3px solid #b24c40; }
 .hero-meta, .nav-links, .eyebrow { color: #645c75; }
 .play-circle { background: #efe6ff; border-color: #d9c8f2; }
 .world-label { color: var(--lead-ink); }
@@ -177,6 +181,20 @@ input, select, textarea { font-size: .875rem; }
 }
 .mascot-name, .lesson-sparko small { color: #645c75; }
 .coin-revenue small, .coin-cost small, .coin-profit small { color: inherit; }
+/* A quiet paper-and-indigo frame for the colorful LEAD festival cast. */
+.app-shell, .landing { background-color: #faf7f0; }
+.sidebar { background: #fdfaf4; border-right-color: #ded8cd; }
+.app-header, .landing-nav { background: #fffdf8; }
+.sidebar nav button.active { color: #263d60; background: #e8edf3; box-shadow: inset 4px 0 0 #b24c40; }
+.board-top .eyebrow, .board-camera-hint { color: #263d60; }
+.board-canvas, .explore-canvas { border-color: #c9b99d; box-shadow: 0 8px 28px #263d6012; }
+.decision-panel { background: #fffdf7; border-color: #d9cdb8; border-top: 4px solid #b24c40; }
+.world-label { background: #fffaf0ed; padding: 13px 16px; border-radius: 0 0 12px 12px; }
+.world-label > span { color: #624b40; font-size: .62rem; letter-spacing: .11em; }
+.dice { background: #f8f1df; color: #263d60; border: 1px solid #dacdb5; }
+.dice-caption { min-height: 2.5em; font-size: .8rem; line-height: 1.5; font-weight: 650; color: #263d60; margin: -8px 0 18px; }
+.board-layout[data-roll-stage="walking"] .dice { box-shadow: 0 0 0 4px #ffde0033; }
+.board-camera-hint { background: #fffaf0ed; border-radius: 6px; padding: 6px 10px; }
 @media(max-width:700px) {
   .landing-nav::after { left: 20px; right: 20px; }
   .hero { padding-top: 32px; }

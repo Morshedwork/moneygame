@@ -535,6 +535,10 @@ export function applyCommand(
         "Quarter 1 is complete. Visit your journal or explore the village.",
       );
       if (c.type === "roll") {
+        // A stale tab or duplicate click must not spend a second turn. Optional
+        // for compatibility with saved clients; current clients always send it.
+        requireThat(c.expectedTurn === undefined || c.expectedTurn === g.turn,
+          "This turn has already moved. Wait for the current roll to finish.");
         requireThat(!g.pending, "Make your current decision first.");
         const die = 1 + Math.floor(next(g) * 6);
         g.lastDie = die;

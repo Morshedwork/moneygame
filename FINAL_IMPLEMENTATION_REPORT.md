@@ -1,6 +1,15 @@
 # LEAD Money Game — implementation report
 
-Date: 10 September 2026.
+Date: 11 September 2026.
+
+## Japan theme and dice update
+
+- Actual Blender village additions: split noren curtains, shoji window lattice, ribbed wagasa umbrellas, bamboo screens, stone lanterns, festival banners and pale sakura clusters. Indigo/paper/vermillion framing preserves the supplied LEAD mascot palette. This is a Japan-inspired fictional village, not a Japanese-language localization.
+- Characters, environment, twenty board spaces, die and coin have editable `.blend` sources and real exported GLB meshes. HTML labels and selection indicators remain accessible interface overlays, not substitutes for 3D models.
+- One shared presentation clock now settles the trusted die result, walks each space, and only then unlocks decisions or opens final reflection. Replacement rolls display their own result without moving. Historical turns never replay on reopening the board. Reduced motion cancels the presentation immediately; loaded-scene gating and explicit text-control fallback avoid invisible cold-load rolls.
+- Immediate client input lock prevents double sends; current roll commands carry expectedTurn, which the included server rules reject when stale. Firebase deployment is still required for the server change to be live.
+- Regression coverage includes actual GLB pip counts and all six upward orientations, timing boundaries, final Start, repeated results, replacements, double sends, reduced motion, slow assets, and the full practice journey.
+- Rebuild the village with `node tools/blender/headless.mjs tools/blender/refine_village.py`; board with `node tools/blender/headless.mjs tools/blender/build_board.py`; render saved assets with `node tools/blender/headless.mjs tools/blender/render_village.py`.
 
 ## Delivery status
 

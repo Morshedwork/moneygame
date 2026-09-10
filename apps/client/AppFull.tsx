@@ -48,6 +48,7 @@ import {
 } from "../../packages/curriculum";
 import { totals, Game } from "../../packages/game-rules";
 import { leadTheme } from "./theme";
+import { useBoardPresentation } from "./useBoardPresentation";
 import {
   WorldPreview,
   CharacterPortrait,
@@ -120,8 +121,7 @@ function Landing() {
         <section className="hero" id="adventure">
           <div className="hero-copy">
             <Chip>
-              <span className="status-dot" /> A LITTLE WORLD. A LIFETIME OF
-              SKILLS.
+              <span className="status-dot" /> A JAPAN-INSPIRED FESTIVAL ADVENTURE
             </Chip>
             <h1>
               Small steps.
@@ -129,8 +129,8 @@ function Landing() {
               Big <em>possibilities.</em>
             </h1>
             <p>
-              A bright idea. Your very own bento stall. A village of
-              possibilities. Discover the joy of making smart money choices—one
+              Paper lanterns. Cherry blossoms. Your very own bento stall.
+              Discover the joy of making smart money choices in Yatai Village—one
               adventure at a time.
             </p>
             <div className="hero-actions">
@@ -155,7 +155,7 @@ function Landing() {
           <div className="hero-world">
             <WorldPreview />
             <div className="world-label">
-              <span>01 / YOUR WORLD AWAITS</span>
+              <span>01 / LANTERN-LIT STREETS. BRIGHT IDEAS.</span>
               <strong>
                 Yatai Village <ArrowUpRight size={23} />
               </strong>
@@ -1190,17 +1190,13 @@ function Locked({
   );
 }
 function Board() {
-  const { player: p, send, busy, setPage } = useGame();
+  const { player: p, send, busy, presenting, reduced, setPage } = useGame();
   const [amount, setAmount] = useState(0);
   const [room, setRoom] = useState<any>(null);
-  const [motion, setMotion] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
   const g = p?.game;
-  useEffect(() => {
-    if (!g) return;
-    setMotion(true);
-    const t = setTimeout(() => setMotion(false), g.path.length * 340 + 250);
-    return () => clearTimeout(t);
-  }, [g?.turn]);
+  const presentation = useBoardPresentation(g, reduced);
+  const motion = !presentation.complete;
   useEffect(() => {
     if (!p || p.id === "practice") return;
     let unsubRoom = () => {};
@@ -1226,7 +1222,7 @@ function Board() {
         page={p ? nextPage(p) : "learn"}
       />
     );
-  if (g.phase === "reflection") return <Reflection />;
+  if (g.phase === "reflection" && !motion) return <Reflection />;
   if (g.phase === "village")
     return (
       <Locked
@@ -1237,7 +1233,7 @@ function Board() {
       />
     );
   const myTurn = !room?.started || room.members[room.turn] === p?.id;
-  const disabled = busy || motion || !myTurn || !!(room && !room.started);
+  const disabled = busy || presenting || motion || !sceneReady || !myTurn || !!(room && !room.started);
   const decision = (data: any) => send("decision", data);
   return (
     <>
@@ -1262,9 +1258,10 @@ function Board() {
           </button>
         </div>
       </div>
-      <div className="board-layout">
+      <div className="board-layout" data-roll-stage={presentation.rolling ? "rolling" : presentation.walking ? "walking" : "complete"}
+        data-die-value={presentation.value} data-pawn-tile={presentation.tile}>
         <section className="board-canvas">
-          <BoardWorld roster={room?.players} />
+          <BoardWorld roster={room?.players} presentation={presentation} onReady={setSceneReady} />
           <div className="board-overlay">
             <span>
               YOUR PRICE <b>{g.price} coins</b>
@@ -1272,9 +1269,9 @@ function Board() {
             <span>
               YOUR PLACE{" "}
               <b>
-                {g.position === 0
+                {presentation.tile === 0
                   ? "Start"
-                  : `${g.position} · ${boardNames[g.position]}`}
+                  : `${presentation.tile} · ${boardNames[presentation.tile]}`}
               </b>
             </span>
           </div>
@@ -1283,6 +1280,10 @@ function Board() {
           </span>
         </section>
         <aside className="decision-panel">
+          {!sceneReady && <div className="board-loading-note" role="status">
+            <p>Preparing your 3D board. You can also play with the labeled die and text controls.</p>
+            <Button secondary onClick={() => setSceneReady(true)}>Play with text controls</Button>
+          </div>}
           <div className="turn-label">
             <span className="status-dot" />
             {room && !room.started
@@ -1292,8 +1293,13 @@ function Board() {
                 : `${room?.players.find((x: any) => x.id === room.members[room.turn])?.name}’S TURN`}
             <span>TURN {g.turn || 1}</span>
           </div>
-          <div className={"dice " + (motion ? "rolling" : "")}>
-            {["✦", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][g.lastDie]}
+          <div className={"dice " + (presentation.rolling ? "rolling" : "")} aria-hidden="true">
+            {["✦", "⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][presentation.value]}
+          </div>
+          <div className="dice-caption" role="status" aria-live="polite">
+            {presentation.rolling ? "Rolling the die…" : presentation.value
+              ? `${presentation.replacement ? "Replacement" : "You rolled"} ${presentation.value}${presentation.replacement ? " · Stay on this space" : ` · ${g.path.length} ${g.path.length === 1 ? "space" : "spaces"}${g.path.length < presentation.value ? " to finish" : ""}`}`
+              : "Roll to begin your village journey"}
           </div>
           <Chip>
             {g.pending
@@ -1303,11 +1309,11 @@ function Board() {
                 : "YOUR NEXT LITTLE STEP"}
           </Chip>
           <h2>
-            {motion ? "A little adventure is unfolding…" : g.outcome?.title}
+            {presentation.rolling ? "A little luck, a new possibility." : motion ? "A little adventure is unfolding…" : g.outcome?.title}
           </h2>
           <p>
             {motion
-              ? "Follow your character around the village."
+              ? presentation.rolling ? "The die settles first. Then your character follows the path." : "Follow your character around the village."
               : g.outcome?.text}
           </p>
           {g.outcome?.sales !== undefined && !motion && (
@@ -1433,10 +1439,11 @@ function Board() {
             </Button>
           )}
           {!g.pending && (
-            <Button disabled={disabled} onClick={() => send("roll")}>
+            <Button disabled={disabled} onClick={() => send("roll", { expectedTurn: g.turn })}>
               <Dices size={20} />
-              {motion
-                ? "Moving…"
+              {busy || presentation.rolling
+                ? "Rolling…"
+                : motion ? "Moving…"
                 : myTurn
                   ? "Roll the die"
                   : "Waiting for your friend"}

@@ -15,12 +15,13 @@ import {
   useAnimations,
   Html,
 } from "@react-three/drei";
-import { Group, Vector3, MathUtils } from "three";
+import { Group, Vector3, MathUtils, PerspectiveCamera } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { boardNames } from "../../packages/curriculum";
 import { boardPosition } from "../../packages/game-rules";
 import { useGame } from "./store";
 import { leadTheme, mascotColors, mascotAccents } from "./theme";
+import { BoardPresentation, dieRotation } from "./board-presentation";
 import type { OrbitControls as OrbitType } from "three-stdlib";
 export class SceneBoundary extends Component<
   { children: ReactNode },
@@ -130,35 +131,25 @@ function LeadCoin() {
   });
   return <group ref={ref} position={[.92, .72, .04]} scale={.5}><primitive object={copy} /></group>;
 }
-function BoardDie({ value, turn }: { value: number; turn: number }) {
+function BoardDie({ presentation }: { presentation: BoardPresentation }) {
   const { scene } = useGLTF("/models/lead-die.glb");
   const copy = useMemo(() => clone(scene), [scene]);
-  const ref = useRef<Group>(null);
-  const elapsed = useRef(1);
-  const reduced = useGame((s) => s.reduced);
-  useEffect(() => { elapsed.current = value && !reduced ? 0 : 1; }, [turn, reduced]);
-  useFrame((_, dt) => {
-    if (!ref.current) return;
-    elapsed.current = Math.min(1, elapsed.current + dt / .7);
-    const t = elapsed.current;
-    const spin = (1 - t) ** 3 * Math.PI * 4;
-    const rotations = [[0,0,0], [0,0,0], [-Math.PI/2,0,0], [0,0,Math.PI/2], [0,0,-Math.PI/2], [Math.PI/2,0,0], [Math.PI,0,0]];
-    const target = rotations[value || 1];
-    ref.current.rotation.set(target[0] + spin, target[1] + spin * .7, target[2]);
-    ref.current.position.y = .88 + Math.sin(t * Math.PI) * 1.3;
-  });
-  return <group ref={ref} position={[0,.88,6]}><primitive object={copy} /></group>;
+  const t = presentation.dieProgress;
+  const spin = (1 - t) ** 3 * Math.PI * 4;
+  const target = dieRotation(presentation.value || 1);
+  return <group name="Authoritative board die" rotation={[target[0] + spin, target[1] + spin * .7, target[2]]}
+    position={[0, .88 + Math.sin(t * Math.PI) * 1.3, 6]}><primitive object={copy} /></group>;
 }
 function Lighting({ night = false }: { night?: boolean }) {
   return (
     <>
-      <color attach="background" args={[night ? "#6f94ac" : "#dcecf0"]} />
-      <fog attach="fog" args={[night ? "#6f94ac" : "#dcecf0", 65, 130]} />
-      <ambientLight intensity={night ? 0.5 : 0.7} />
+      <color attach="background" args={[night ? "#536881" : "#dcecf0"]} />
+      <fog attach="fog" args={[night ? "#536881" : "#dcecf0", 65, 130]} />
+      <ambientLight intensity={night ? 0.65 : 0.7} />
       <hemisphereLight args={["#cee9ff", "#819061", 0.7]} />
       <directionalLight
         position={[-15, 30, 16]}
-        intensity={night ? 1.4 : 2.2}
+        intensity={night ? 1.65 : 2.2}
         color="#ffe1b3"
         castShadow
         shadow-mapSize={[2048, 2048]}
@@ -196,7 +187,7 @@ export function WorldPreview() {
         dpr={[1, 1.5]}
         camera={{ position: [33, 29, 42], fov: 39 }}
       >
-        <Lighting />
+        <Lighting night />
         <Suspense
           fallback={
             <Html center>
@@ -268,59 +259,60 @@ export function CharacterPortrait({
 }
 function Pawn({
   avatar,
-  position,
-  path,
-  turn,
+  presentation,
 }: {
   avatar: string;
-  position: number;
-  path: number[];
-  turn: number;
+  presentation: BoardPresentation;
 }) {
-  const ref = useRef<Group>(null);
-  const [moving, setMoving] = useState(false);
-  const progress = useRef({ time: 99, path: [] as number[] });
-  const current = useRef(boardPosition(position));
-  const reduced = useGame((s) => s.reduced);
-  useEffect(() => {
-    if (!path.length || reduced) {
-      current.current = boardPosition(position);
-      return;
-    }
-    progress.current = { time: 0, path };
-    setMoving(true);
-  }, [turn]);
-  useFrame((_, dt) => {
-    const p = progress.current;
-    p.time += Math.min(dt, 0.05);
-    const step = Math.floor(p.time / 0.34);
-    if (step < p.path.length) {
-      const target = new Vector3(...boardPosition(p.path[step]));
-      const v = new Vector3(...current.current).lerp(
-        target,
-        Math.min(1, dt * 13),
-      );
-      current.current = [v.x, 0.12 + Math.sin(p.time * 18) * 0.07, v.z];
-    } else if (moving) {
-      current.current = boardPosition(position);
-      setMoving(false);
-    }
-    if (ref.current) ref.current.position.set(...current.current);
-  });
   return (
-    <group ref={ref}>
-      <Mascot name={avatar} scale={0.87} animation={moving ? "Walk" : "Idle"} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.34, 0]}>
+    <group name="Moving board pawn" position={presentation.point} rotation={[0, presentation.facing, 0]}>
+      <Mascot name={avatar} scale={0.87} animation={presentation.walking ? "Walk" : "Idle"} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]}>
         <ringGeometry args={[0.6, 0.76, 32]} />
         <meshBasicMaterial color={leadTheme.action} />
       </mesh>
     </group>
   );
 }
-export function BoardWorld({ roster = [] }: { roster?: any[] }) {
+function BoardSceneReady({ onReady }: { onReady: (ready: boolean) => void }) {
+  useEffect(() => { onReady(true); }, [onReady]);
+  return null;
+}
+function FitBoardCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    if (!(camera instanceof PerspectiveCamera)) return;
+    // Fit all twenty tiles, including Start, on narrow and wide board panels.
+    const halfVertical = MathUtils.degToRad(camera.fov / 2);
+    const halfAngle = Math.min(halfVertical, Math.atan(Math.tan(halfVertical) * size.width / size.height));
+    const distance = 17.3 / Math.sin(halfAngle) * 1.1;
+    camera.position.set(22, 32, 30).normalize().multiplyScalar(distance);
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, size.width, size.height]);
+  return null;
+}
+function BoardTiles({ activeTile }: { activeTile: number }) {
+  const { scene } = useGLTF("/models/yatai-board.glb");
+  const copy = useMemo(() => clone(scene), [scene]);
+  useEffect(() => {
+    const restorers: Array<() => void> = [];
+    copy.traverse((o: any) => {
+      if (!o.isMesh) return;
+      o.castShadow = true; o.receiveShadow = true;
+      const original = o.material;
+      const own = original.clone();
+      o.material = own;
+      if (o.name === `Board_tile_${String(activeTile).padStart(2, "0")}`) own.color.set(leadTheme.lavender);
+      restorers.push(() => { o.material = original; own.dispose(); });
+    });
+    return () => restorers.forEach(restore => restore());
+  }, [copy, activeTile]);
+  return <primitive object={copy} />;
+}
+export function BoardWorld({ roster = [], presentation, onReady }: { roster?: any[]; presentation: BoardPresentation; onReady: (ready: boolean) => void }) {
   const p = useGame((s) => s.player)!;
   const g = p.game!;
-  const colors = ["#e8dcff", "#d9edbc", "#ffcfcd", "#cfedfa", "#fff099"];
   return (
     <SceneBoundary>
       <Canvas
@@ -329,6 +321,7 @@ export function BoardWorld({ roster = [] }: { roster?: any[] }) {
         camera={{ position: [22, 32, 30], fov: 38 }}
       >
         <Lighting />
+        <FitBoardCamera />
         <Suspense
           fallback={
             <Html center>
@@ -337,17 +330,11 @@ export function BoardWorld({ roster = [] }: { roster?: any[] }) {
           }
         >
           <Village />
+          <BoardTiles activeTile={presentation.tile} />
           {boardNames.map((name, i) => {
             const pos = boardPosition(i);
             return (
               <group key={i} position={pos}>
-                <mesh position={[0, 0.18, 0]} receiveShadow>
-                  <boxGeometry args={[3.6, 0.25, 3.6]} />
-                  <meshStandardMaterial
-                    color={g.position === i ? leadTheme.lavender : colors[i % 5]}
-                    roughness={0.85}
-                  />
-                </mesh>
                 <Html
                   position={[0, 0.34, 0]}
                   center
@@ -357,7 +344,7 @@ export function BoardWorld({ roster = [] }: { roster?: any[] }) {
                 >
                   <div
                     className={
-                      "tile-label " + (i === g.position ? "current" : "")
+                      "tile-label " + (i === presentation.tile ? "current" : "")
                     }
                   >
                     <b>{String(i).padStart(2, "0")}</b>
@@ -369,11 +356,10 @@ export function BoardWorld({ roster = [] }: { roster?: any[] }) {
           })}
           <Pawn
             avatar={p.avatar}
-            position={g.position}
-            path={g.path}
-            turn={g.turn}
+            presentation={presentation}
           />
-          <BoardDie value={g.lastDie} turn={g.turn} />
+          <BoardDie presentation={presentation} />
+          <BoardSceneReady onReady={onReady} />
           {roster
             .filter((r) => r.id !== p.id)
             .map((r) => (
@@ -397,7 +383,7 @@ export function BoardWorld({ roster = [] }: { roster?: any[] }) {
           <OrbitControls
             enablePan={false}
             minDistance={32}
-            maxDistance={72}
+            maxDistance={130}
             minPolarAngle={0.35}
             maxPolarAngle={1.1}
           />

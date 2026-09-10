@@ -32,3 +32,9 @@ Continuous soft silhouettes replace separated torso/mitten/leg primitives. Each 
 Palette hex values are converted from sRGB to linear values when creating Blender materials. Matte highlights, simple black pupils and white smiles preserve the guidebook character identity. Portrait cameras leave space for crown tips and raised-arm motion. Landing mentor gestures differ by role.
 
 `npm run blender:characters` regenerates characters without changing the village. `npm run blender:render` renders real saved Blender assets into `docs/screenshots/blender/` and checks normalized skin weights, clip counts, upward jumps and raised-hand deformation. Those renders are validation evidence, not image planes or substitute gameplay assets.
+
+## Japanese festival setting and shared dice motion
+
+The latest direction is a fictional Japanese-inspired yatai village, using paper-white surfaces, indigo (`#263D60`) and vermillion (`#B24C40`) to frame—not recolor—the LEAD cast. Split noren, shoji lattice, ribbed umbrellas, bamboo screens, stone lanterns, festival banners and sakura are actual modeled Blender geometry. The twenty beveled board tiles, die and coin also have editable Blender sources. Accessible labels remain HTML overlays.
+
+A single clock drives the die, pawn, captions and input lock: 700ms to settle, 340ms per space, then the result. Reduced motion skips this presentation. The final movement reaches Start before reflection. A cold 3D scene keeps gameplay disabled until ready or the player explicitly chooses text controls. Dice orientations are checked against actual GLB pip geometry, not only a duplicated lookup table.

@@ -68,7 +68,7 @@ def environment():
  box('Island meadow',(0,-.32,0),(67,.6,59),grass,.7)
  box('Main village lane',(0,.01,4),(9,.09,50),paving,.15);box('Market cross street',(0,.02,1),(54,.10,8),paving,.15)
  for z in [-10,10]:box('Quarter path',(0,.03,z),(24,.12,3.7),paving)
- for x in [-10,10]:box('Quarter path',(x,.03,0),(3.7,.12,24),paving)
+ for x in [-10,10]:box('Quarter path',(x,.03,0),(3.7,.12,16.3),paving)
  # Randomized cobbles and edging, clustered rather than a single bare floor.
  for i in range(270):
   x=random.uniform(-26,26);z=random.uniform(-22,24)
@@ -84,6 +84,7 @@ def environment():
   for xx in [x-w*.31,x+w*.31]:
    box('Warm window',(xx,1.65,z+d/2+.13),(.85,1.1,.09),gold)
    for offset in [-.26,0,.26]:box('Window slat',(xx+offset,1.65,z+d/2+.19),(.04,1.1,.035),wood,.006)
+   for yy in [1.28,1.65,2.02]:box('Shoji cross lattice',(xx,yy,z+d/2+.2),(.86,.035,.035),wood,.005)
   roof(x,3.2,z,w,d,m);box('Shop sign',(x,2.9,z+d/2+.26),(w*.8,.5,.13),navy);text(label+' lettering',label,(x,2.9,z+d/2+.35),.27,white)
   for xx in [x-w*.46,x+w*.46]:lantern(xx,2.3,z+d/2+.5)
   manifest['colliders'].append({'x':x,'z':z,'w':w+.4,'d':d+.4})
@@ -94,6 +95,11 @@ def environment():
   box('Stall counter',(x,1.15,z+.8),(3.8,.24,.65),lightwood,.04);box('Counter front',(x,.69,z+.87),(3.55,.75,.13),wood)
   roof(x,3.0,z,3.8,2.6,canvas)
   box('Stall nameboard',(x,2.8,z+1.5),(3.25,.52,.12),wood);text('Stall label',label,(x,2.8,z+1.58),.28,white)
+  # Five separate noren panels leave a clear serving opening below.
+  for i in range(5):
+   xx=x-1.28+i*.64;box('Split noren curtain',(xx,2.29,z+1.35),(.60,.44,.035),navy if canvas!=red else red,.008)
+   box('Noren stitched hem',(xx,2.10,z+1.373),(.55,.018,.01),white,.002)
+  text('Noren shop crest','B' if x==0 else '+',(x,2.31,z+1.39),.19,white)
   for i in range(5):
    xx=x-1.2+i*.57;box('Bento box',(xx,1.32,z+.80),(.45,.12,.40),wood,.03);sphere('Rice serving',(xx-.07,1.43,z+.80),(.11,.08,.12),white,10,6);sphere('Golden side',(xx+.11,1.43,z+.80),(.09,.07,.11),fruit,10,6)
   lantern(x-1.7,2.15,z+1.35);lantern(x+1.7,2.15,z+1.35);manifest['colliders'].append({'x':x,'z':z,'w':4,'d':2.8})
@@ -141,6 +147,8 @@ def environment():
  for x,z in [(-3,3),(3,3),(-14,-4),(15,-7),(-22,9)]:
   box('Wooden crate',(x,.35,z),(.75,.65,.7),lightwood)
   for k in range(5):sphere('Market produce',(x+(k%3-.8)*.19,.71,z+(k//3-.3)*.21),(.13,.13,.13),fruit,8,6)
+ from festival_details import add_festival_details
+ add_festival_details(sys.modules[__name__])
  # Join static material batches: keep the world efficient in browsers.
  bpy.ops.object.select_all(action='DESELECT')
  for material in list(M.values()):
@@ -157,3 +165,4 @@ if __name__=='__main__':
  with open(os.path.join(OUT,'manifest.json'),'w',encoding='utf-8') as f:json.dump(manifest,f,indent=2)
  print('LEAD_ASSETS_COMPLETE',flush=True)
  import build_props
+ import build_board

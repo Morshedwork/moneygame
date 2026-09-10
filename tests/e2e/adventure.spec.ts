@@ -39,7 +39,8 @@ test("complete practice: learning → business → full quarter → reflection �
         .count()
     )
       break;
-    await page.locator(".dice.rolling").waitFor({ state: "hidden" });
+    await page.locator('.board-layout[data-roll-stage="rolling"], .board-layout[data-roll-stage="walking"]').waitFor({ state: "hidden" });
+    if (await page.getByRole("heading", { name: "Look how far you’ve come." }).count()) break;
     let found = false;
     for (const pattern of [
       /^Roll the die$/,

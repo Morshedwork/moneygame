@@ -13,6 +13,8 @@ type Store = {
   practice: boolean;
   practicePrivate: Player | null;
   busy: boolean;
+  presenting: boolean;
+  finishPresentation: () => void;
   error: string;
   feedback: { correct: boolean; text: string } | null;
   page: string;
@@ -32,12 +34,14 @@ export const useGame = create<Store>((set, get) => ({
   practice: false,
   practicePrivate: null,
   busy: false,
+  presenting: false,
+  finishPresentation: () => set({ presenting: false }),
   error: "",
   feedback: null,
   page: "home",
   muted: true,
   reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  setPage: (page) => set({ page, error: "", feedback: null }),
+  setPage: (page) => set({ page, error: "", feedback: null, presenting: false }),
   setPlayer: (player) => set({ player }),
   setError: (error) => set({ error }),
   startPractice: () => {
@@ -52,10 +56,12 @@ export const useGame = create<Store>((set, get) => ({
     });
   },
   send: async (type, data = {}) => {
-    if (get().busy) return false;
-    set({ busy: true, error: "", feedback: null });
+    if (get().busy || get().presenting) return false;
+    const rollsDie = type === "roll" || (type === "decision" && data.choice === "replace");
+    set({ busy: true, error: "", feedback: null, presenting: rollsDie });
     try {
       const command: Command = { ...data, id: crypto.randomUUID(), type };
+      if (type === "roll") command.expectedTurn = data.expectedTurn ?? get().player?.game?.turn;
       if (get().practice) {
         const result = applyCommand(
           get().practicePrivate!,
@@ -73,7 +79,7 @@ export const useGame = create<Store>((set, get) => ({
       }
       return true;
     } catch (e) {
-      set({ error: friendlyError(e) });
+      set({ error: friendlyError(e), presenting: false });
       return false;
     } finally {
       set({ busy: false });
@@ -89,5 +95,6 @@ export const useGame = create<Store>((set, get) => ({
       page: "home",
       feedback: null,
       error: "",
+      presenting: false,
     }),
 }));

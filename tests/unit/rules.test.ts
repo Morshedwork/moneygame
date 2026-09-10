@@ -222,6 +222,15 @@ describe("economics", () => {
   });
 });
 describe("full quarter and village gate", () => {
+  it("applies a retried roll once and rejects a distinct stale-turn request", () => {
+    const p = ready();
+    const request = cmd("roll", { expectedTurn: 0 });
+    const result = applyCommand(p, request).player;
+    expect(result.game!.turn).toBe(1);
+    expect(applyCommand(result, request).player).toEqual(result);
+    expect(() => applyCommand(result, cmd("roll", { expectedTurn: 0 }))).toThrow("already moved");
+    expect(p.game!.turn).toBe(0);
+  });
   it("has exactly the specified clockwise board", () => {
     expect(boardNames).toHaveLength(20);
     expect(boardPosition(0)).toEqual([-10, 0, 10]);
