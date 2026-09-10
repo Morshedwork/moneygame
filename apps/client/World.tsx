@@ -241,10 +241,10 @@ export function CharacterPortrait({
       <Canvas
         shadows
         dpr={[1, 1.5]}
-        camera={{ position: [0, 1.65, 5], fov: 34 }}
+        camera={{ position: [0, 1.75, 5.4], fov: 36 }}
       >
-        <ambientLight intensity={2} />
-        <directionalLight position={[3, 5, 5]} intensity={3} />
+        <ambientLight intensity={1.2} />
+        <directionalLight position={[3, 5, 5]} intensity={2} />
         <Suspense fallback={<Html center><div className="scene-loading">Meeting your mentor…</div></Html>}>
           <Mascot name={name} animation={animation} />
           {name === "sparko" && <LeadCoin />}
@@ -259,7 +259,7 @@ export function CharacterPortrait({
             enableZoom={false}
             minPolarAngle={1.25}
             maxPolarAngle={1.65}
-            target={[0, 1.4, 0]}
+            target={[0, 1.55, 0]}
           />
         </Suspense>
       </Canvas>

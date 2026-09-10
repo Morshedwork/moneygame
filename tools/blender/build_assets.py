@@ -2,7 +2,7 @@
 All meshes are modeled here, not reference-image planes. Coordinates map to a
 Y-up browser world. The supplied mascot designs guide silhouette and colors.
 """
-import bpy, math, json, os, sys, random
+import bpy, bmesh, math, json, os, sys, random
 from mathutils import Vector
 ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'../..'))
 OUT=os.path.join(ROOT,'public','models'); SOURCE=os.path.join(ROOT,'assets','source','blender')
@@ -36,10 +36,12 @@ def beam(name,a,b,r,m):
  va,vb=Vector(at(a)),Vector(at(b));bpy.ops.mesh.primitive_cylinder_add(vertices=10,radius=r,depth=(vb-va).length,location=(va+vb)/2);o=bpy.context.object;o.rotation_euler=(vb-va).to_track_quat('Z','Y').to_euler();return finish(o,name,m)
 def text(name,body,pos,size,m):
  bpy.ops.object.text_add(location=at(pos),rotation=(math.pi/2,0,0));o=bpy.context.object;o.data.body=body;o.data.align_x='CENTER';o.data.align_y='CENTER';o.data.size=size;o.data.extrude=.007;o.data.materials.append(m);bpy.ops.object.convert(target='MESH');o.name=name;return o
-def polygon(name,points,depth,m):
+def polygon(name,points,depth,m,bevel=.022):
  # Flat 2D crown/crest shape extruded in browser Z.
  verts=[at((x,y,z)) for z in [-depth/2,depth/2] for x,y in points];n=len(points);faces=[tuple(range(n-1,-1,-1)),tuple(range(n,n*2))]+[(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
- mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update();o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o);finish(o,name,m);mod=o.modifiers.new('Soft corners','BEVEL');mod.width=.022;mod.segments=2;bpy.context.view_layer.objects.active=o;o.select_set(True);bpy.ops.object.modifier_apply(modifier=mod.name);o.select_set(False);return o
+ mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+ bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces));bm.to_mesh(mesh);bm.free()
+ o=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(o);finish(o,name,m);mod=o.modifiers.new('Soft corners','BEVEL');mod.width=bevel;mod.segments=2;bpy.context.view_layer.objects.active=o;o.select_set(True);bpy.ops.object.modifier_apply(modifier=mod.name);o.select_set(False);return o
 def star(name,x,y,z,r,m):
  pts=[(x+math.sin(i*math.pi/5)*r*(1 if i%2==0 else .46),y+math.cos(i*math.pi/5)*r*(1 if i%2==0 else .46)) for i in range(10)];o=polygon(name,pts,.13,m);o.location.y=-z;return o
 def export(name,animated=False):
@@ -50,69 +52,6 @@ def export(name,animated=False):
  manifest['assets'].append({'id':name,'file':'/models/'+name+'.glb','source':'assets/source/blender/'+name+'.blend','triangles':tris,'bytes':os.path.getsize(path),'animations':ANIMS if animated else []})
  print('LEAD_EXPORTED',name,tris,flush=True)
 ANIMS=['Idle','Walk','Run','Wave','Talk','Explain','Point','Think','Ask','Encourage','Celebrate','GentleConcern','Sit','Stand','LookAtPlayer','LookAtBoard','Serve','Interact']
-def character(name,color,kind):
- clear();skin=mat('Skin',color);dark=mat('Shadow accent',tuple(c*.55 for c in color));white=mat('Warm white',(.97,.98,1));black=mat('Midnight eyes',(.015,.026,.05));cyan=mat('Cyan crest',(.035,.72,.94));gold=mat('Golden accent',(1,.65,.05));palette=[mat('Crown blue',(.10,.56,.84)),mat('Crown green',(.30,.66,.12)),mat('Crown coral',(.97,.24,.28)),mat('Crown yellow',(1,.78,.02))]
- parts={k:[] for k in ['root','body','head','arm.L','arm.R','leg.L','leg.R']}
- def add(b,o):parts[b].append(o);return o
- add('body',sphere('Rounded torso',(0,1.03,0),(.40,.56,.28),skin))
- add('body',sphere('Tummy highlight',(0,1.01,.20),(.26,.35,.09),skin))
- for sign,side in [(-1,'L'),(1,'R')]:
-  add('leg.'+side,sphere('Leg '+side,(sign*.23,.38,0),(.19,.40,.21),skin));add('leg.'+side,sphere('Foot '+side,(sign*.25,.13,.11),(.23,.14,.31),dark if kind=='sparko' else skin))
-  add('arm.'+side,sphere('Arm '+side,(sign*.48,1.03,0),(.145,.36,.16),skin));add('arm.'+side,sphere('Mitten '+side,(sign*.55,.79,.035),(.17,.16,.17),skin))
- add('head',sphere('Signature big round head',(0,1.96,0),(.65,.64,.53),skin,24,16))
- for x in [-.255,.255]:
-  add('head',sphere('Eye white',(x,2.03,.474),(.147,.188,.069),white));add('head',sphere('Eye pupil',(x,2.026,.530),(.098,.129,.035),black));add('head',sphere('Eye sparkle',(x-.027,2.075,.562),(.033,.037,.016),white))
-  add('head',sphere('Cheek',(x*1.48,1.83,.434),(.086,.043,.024),dark))
- add('head',sphere('Nose',(0,1.88,.537),(.049,.052,.032),dark));add('head',sphere('Happy mouth',(0,1.68,.453),(.187,.103,.049),dark));add('head',sphere('Smile',(0,1.706,.490),(.153,.061,.025),white))
- if kind=='sparko':
-  for i in [-1,0,1]:
-   o=polygon('Flame crest '+str(i),[(i*.16-.17,2.44),(i*.16+.15,2.44),(i*.16+.29,2.84-abs(i)*.10),(i*.16+.02,2.68)],.24,cyan if i!=0 else skin);add('head',o)
-  add('body',text('LEAD hoodie','LEAD',(0,1.15,.305),.19,white));add('body',sphere('Hood',(0,1.49,-.1),(.46,.19,.30),dark))
-  for x in [-.13,.13]:add('body',beam('Drawstring',(x,1.44,.29),(x,1.19,.33),.015,white))
- else:
-  add('head',sphere('Hair cap',(0,2.42,.05),(.45,.18,.36),dark))
-  o=polygon('Hair swoop',[(-.30,2.47),(-.08,2.67),(.15,2.47),(.36,2.49),(.10,2.34),(-.05,2.42)],.15,dark);o.location.y=-.32;add('head',o)
-  for i,x in enumerate([-.65,-.43,.43,.65]):
-   y=2.50+(0.14 if abs(x)<.5 else 0);z=-.04
-   if kind=='lido':
-    if i in [1,2]:continue
-    add('head',beam('Bulb stalk',(x*.7,2.32,z),(x,2.66,z),.047,dark));add('head',cyl('Bulb socket',(x,2.68,z),.082,.11,dark));add('head',sphere('Idea bulb',(x,2.85,z),(.14,.19,.14),mat('Glowing bulb',(1,.85,.14),emit=.7)))
-   elif kind=='oty':add('head',beam('Star stem',(x*.7,2.30,z),(x,y,z),.025,gold));add('head',star('Authenticity star',x,y,z,.20,palette[i]))
-   elif kind=='prena':
-    bpy.ops.mesh.primitive_torus_add(major_radius=.17,minor_radius=.043,major_segments=16,minor_segments=6,location=at((x,y,z)),rotation=(math.pi/2,0,0));add('head',finish(bpy.context.object,'Gear ring',palette[i]))
-    for k in range(8):
-     angle=k*math.pi/4;add('head',box('Gear tooth',(x+math.sin(angle)*.19,y+math.cos(angle)*.19,z),(.085,.085,.12),palette[i],.013))
-   else:
-    add('head',box('Puzzle crown',(x,y,z),(.29,.28,.12),palette[i],.035));add('head',sphere('Puzzle tab',(x,y+.17,z),(.075,.078,.07),palette[i]))
- # Real deform rig; each soft component is rigid-weighted to an appropriate bone.
- bpy.ops.object.armature_add();rig=bpy.context.object;rig.name=name+'_Rig';bpy.ops.object.mode_set(mode='EDIT');bones=rig.data.edit_bones;bones.remove(bones[0]);positions={'root':((0,0,0),(0,.3,0)),'body':((0,.8,0),(0,1.4,0)),'head':((0,1.5,0),(0,2.1,0)),'arm.L':((-.38,1.34,0),(-.54,.78,0)),'arm.R':((.38,1.34,0),(.54,.78,0)),'leg.L':((-.23,.73,0),(-.23,.13,0)),'leg.R':((.23,.73,0),(.23,.13,0))}
- for b,(a,z) in positions.items():bone=bones.new(b);bone.head=at(a);bone.tail=at(z)
- for b in positions:
-  if b!='root':bones[b].parent=bones['body' if b in ['head','arm.L','arm.R'] else 'root']
- bpy.ops.object.mode_set(mode='OBJECT')
- for b,objs in parts.items():
-  for o in objs:
-   group=o.vertex_groups.new(name=b);group.add(list(range(len(o.data.vertices))),1,'REPLACE');mod=o.modifiers.new('LEAD soft mascot rig','ARMATURE');mod.object=rig;o.parent=rig
- rig.animation_data_create();scene=bpy.context.scene;scene.render.fps=24;scene.frame_start=1;scene.frame_end=48
- for anim in ANIMS:
-  action=bpy.data.actions.new(anim);rig.animation_data.action=action
-  for frame in [1,7,13,19,25,31,37,43,49]:
-   t=(frame-1)/48*math.tau
-   for pb in rig.pose.bones:pb.rotation_mode='XYZ';pb.rotation_euler=(0,0,0);pb.location=(0,0,0)
-   pose=rig.pose.bones;pose['body'].location.z=.025*math.sin(t);pose['head'].rotation_euler.y=.035*math.sin(t)
-   if anim in ['Walk','Run']:
-    speed=2 if anim=='Run' else 1;amp=.66 if anim=='Run' else .42
-    pose['leg.L'].rotation_euler.x=math.sin(t*speed)*amp;pose['leg.R'].rotation_euler.x=-math.sin(t*speed)*amp;pose['arm.L'].rotation_euler.x=-math.sin(t*speed)*amp*.7;pose['arm.R'].rotation_euler.x=math.sin(t*speed)*amp*.7;pose['body'].location.z=abs(math.sin(t*speed))*.05
-   elif anim in ['Wave','Encourage','Celebrate']:
-    pose['arm.R'].rotation_euler.y=-2.2+.24*math.sin(t*2)
-    if anim=='Celebrate':pose['arm.L'].rotation_euler.y=2.2+.24*math.sin(t*2);pose['root'].location.z=.15*abs(math.sin(t))
-   elif anim in ['Talk','Explain','Ask','Serve','Interact','Point']:
-    pose['arm.R'].rotation_euler.x=-.7+.2*math.sin(t);pose['arm.L'].rotation_euler.y=.25*math.sin(t);pose['head'].rotation_euler.x=.07*math.sin(t*2)
-   elif anim in ['Think','GentleConcern','LookAtBoard']:pose['head'].rotation_euler.x=.22;pose['head'].rotation_euler.y=.13*math.sin(t)
-   elif anim=='Sit':pose['leg.L'].rotation_euler.x=-1.35;pose['leg.R'].rotation_euler.x=-1.35;pose['root'].location.z=-.35
-   for pb in rig.pose.bones:pb.keyframe_insert(data_path='rotation_euler',frame=frame);pb.keyframe_insert(data_path='location',frame=frame)
-  action.use_fake_user=True
- rig.animation_data.action=None;scene.frame_set(1);export(name,True)
 def roof(x,y,z,w,d,m):
  # Curved gable profile, lifted eaves, ridge caps, individually tiled ribs.
  for side in [-1,1]:
@@ -211,7 +150,9 @@ def environment():
    bpy.context.view_layer.objects.active=objs[0];bpy.ops.object.join();bpy.context.object.name='Village_'+material.name;bpy.ops.object.select_all(action='DESELECT')
  export('yatai-village')
 if __name__=='__main__':
- for name,color in [('lido',(.95,.23,.23)),('prena',(.12,.53,.79)),('oty',(1,.72,.02)),('diva',(.34,.67,.12)),('sparko',(.025,.32,.76))]:character(name,color,name)
+ from reference_mascots import build_mascot
+ manifest['version']=2
+ for name in ['lido','prena','oty','diva','sparko']:build_mascot(sys.modules[__name__],name)
  environment()
  with open(os.path.join(OUT,'manifest.json'),'w',encoding='utf-8') as f:json.dump(manifest,f,indent=2)
  print('LEAD_ASSETS_COMPLETE',flush=True)

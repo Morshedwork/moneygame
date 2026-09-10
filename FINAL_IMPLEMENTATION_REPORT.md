@@ -55,17 +55,19 @@ Official Blender Python module `bpy 5.2.1` was executed with Python 3.13.9. A do
 | Die | `assets/source/blender/lead-die.blend` | `public/models/lead-die.glb` | runtime roll |
 | LEAD coin | `assets/source/blender/lead-coin.blend` | `public/models/lead-coin.glb` | runtime motion |
 
-Each mascot has a seven-bone component-weighted rig. Clips: Idle, Walk, Run, Wave, Talk, Explain, Point, Think, Ask, Encourage, Celebrate, GentleConcern, Sit, Stand, LookAtPlayer, LookAtBoard, Serve, Interact. Some gesture variants share simple motion; these are not facial blend-shape performances.
+Each mascot now has a ten-bone deform rig, including eye and mouth bones, over a continuous soft body. Clips: Idle, Walk, Run, Wave, Talk, Explain, Point, Think, Ask, Encourage, Celebrate, GentleConcern, Sit, Stand, LookAtPlayer, LookAtBoard, Serve, Interact. Blinks, speaking motion, distinct gestures and corrected vertical jumps are authored in Blender; these are not facial blend-shape or lip-sync performances.
 
-The idempotent generator resets the scene between assets. `public/models/manifest.json` lists sources, dimensions, meshes, materials, clips, collision bounds and interaction anchors. Validation checks eight required assets, source existence, GLB structure, meshes, skins, expected clips and size budgets. A comprehensive normals/scale/texture correctness audit and offline Blender beauty renders have not been completed.
+The idempotent generator resets the scene between assets. `public/models/manifest.json` lists sources, triangle counts, sizes, clips, collision bounds and interaction anchors. Validation checks eight required assets, source existence, GLB structure, meshes, skins, expected clips and size budgets. Revision 2 uses reference-specific crowns, forelocks, smiles, wide soft stances and diagonal chest accents. Actual Blender studio renders of the four guidebook mascots are in `docs/screenshots/blender/`, including standing, gesture and blink/concern poses, plus skin-weight and movement sanity checks. A comprehensive topology/normal/texture audit remains outstanding.
 
 ## Yatai Village and performance
 
 The village has five stalls, a food truck, bank, town hall, teaching landmark, teahouse, gate, stage, lanterns, paths, trees, gardens, bridge, stream, benches and future-area signage. It uses original geometry rather than reference-image billboards. Movement waits for collision metadata; buildings block player movement. Dialogs pause movement.
 
-The village export is approximately 6.74 MiB, material-batched into 15 static meshes (about 127,556 triangles). Each mascot is 0.37–0.77 MiB. Device pixel ratio is capped at 1.5. There is no measured representative-device FPS target claim. More character batching, LOD, camera obstruction handling and performance testing remain.
+The village export is approximately 6.74 MiB, material-batched into 15 static meshes (about 127,556 triangles). Revised mascots are approximately 1.24–1.60 MiB each, with 14–29 mesh objects and 18 clips. Device pixel ratio is capped at 1.5. There is no measured representative-device FPS target claim. More character batching, LOD, camera obstruction handling and performance testing remain.
 
 ## Tests actually executed
+
+Revision 2 verification: the five revised mascots exported successfully from Blender 5.2.1 LTS; all eight runtime assets validated; all 25 rule tests and all three browser journey tests passed again with the new models. The production client/server build passed. The four guidebook mascots also passed Blender skin-weight, vertical-hop, raised-hand and maximum-wave-edge checks, with standing, gesture and blink renders inspected. This does not change the unverified Firebase status above.
 
 - TypeScript typecheck, Vite production build and server bundle: passed.
 - Vitest: **25 tests passed**, including the mandatory 5/6/8 customer-budget examples (price 6: revenue 12, cost 6, profit 6; price 5: revenue 15, cost 9, profit 6).
@@ -86,7 +88,7 @@ The village export is approximately 6.74 MiB, material-batched into 15 static me
 - Japanese translation and a complete locale extraction layer.
 - Full curriculum introduction conversation/matching variation, comprehensive moderation and production content-authoring tools.
 - Full admin support/deletion/export workflows, pagination beyond 200 accounts, guardian verification, retention policy, operator privacy contact, App Check enforcement and abuse/rate controls.
-- Blender offline preview renders and exhaustive geometry validation.
+- Exhaustive Blender geometry validation and representative-device performance testing (studio preview renders are now included).
 
 Future quarters, property and international economies are intentionally outside this Q1 release.
 
@@ -115,6 +117,8 @@ On this workstation the ignored `.runtime` directory contains the portable Pytho
 node tools/blender/headless.mjs --install
 npm run blender:headless
 npm run blender:props
+npm run blender:characters
+npm run blender:render
 ```
 
 The fallback runtime is not committed. Use installed Blender on another machine, or read `tools/blender/headless.mjs` for the exact local runtime paths.

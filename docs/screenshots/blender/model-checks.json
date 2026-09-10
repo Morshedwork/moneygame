@@ -1,0 +1,45 @@
+{
+  "blender": "5.2.1 LTS",
+  "models": [
+    {
+      "character": "lido",
+      "bones": 10,
+      "actions": 18,
+      "normalized_weights": true,
+      "vertical_jump": true,
+      "finite_wave_skin": true,
+      "hand_weights_and_raised_skin": true,
+      "longest_wave_edge": 0.1867
+    },
+    {
+      "character": "prena",
+      "bones": 10,
+      "actions": 18,
+      "normalized_weights": true,
+      "vertical_jump": true,
+      "finite_wave_skin": true,
+      "hand_weights_and_raised_skin": true,
+      "longest_wave_edge": 0.1867
+    },
+    {
+      "character": "oty",
+      "bones": 10,
+      "actions": 18,
+      "normalized_weights": true,
+      "vertical_jump": true,
+      "finite_wave_skin": true,
+      "hand_weights_and_raised_skin": true,
+      "longest_wave_edge": 0.1867
+    },
+    {
+      "character": "diva",
+      "bones": 10,
+      "actions": 18,
+      "normalized_weights": true,
+      "vertical_jump": true,
+      "finite_wave_skin": true,
+      "hand_weights_and_raised_skin": true,
+      "longest_wave_edge": 0.1867
+    }
+  ]
+}

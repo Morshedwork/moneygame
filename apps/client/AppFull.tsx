@@ -231,7 +231,7 @@ function Landing() {
                 style={{ "--mentor": m.color } as React.CSSProperties}
               >
                 <div className="mentor-portrait">
-                  <CharacterPortrait name={m.id} animation="Wave" />
+                  <CharacterPortrait name={m.id} animation={m.id === "lido" ? "Wave" : m.id === "prena" ? "Explain" : m.id === "oty" ? "Encourage" : "Ask"} />
                 </div>
                 <div>
                   <h3>{m.name}</h3>

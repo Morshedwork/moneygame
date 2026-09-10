@@ -1,14 +1,38 @@
 {
-  "version": 1,
+  "version": 2,
   "generator": "tools/blender/build_assets.py",
   "blender": "5.2.1 LTS",
   "assets": [
     {
+      "id": "yatai-village",
+      "file": "/models/yatai-village.glb",
+      "source": "assets/source/blender/yatai-village.blend",
+      "triangles": 127556,
+      "bytes": 7066212,
+      "animations": []
+    },
+    {
+      "id": "lead-die",
+      "file": "/models/lead-die.glb",
+      "source": "assets/source/blender/lead-die.blend",
+      "triangles": 3636,
+      "bytes": 112468,
+      "animations": []
+    },
+    {
+      "id": "lead-coin",
+      "file": "/models/lead-coin.glb",
+      "source": "assets/source/blender/lead-coin.blend",
+      "triangles": 2000,
+      "bytes": 131796,
+      "animations": []
+    },
+    {
       "id": "lido",
       "file": "/models/lido.glb",
       "source": "assets/source/blender/lido.blend",
-      "triangles": 7940,
-      "bytes": 399700,
+      "triangles": 42128,
+      "bytes": 1383316,
       "animations": [
         "Idle",
         "Walk",
@@ -34,8 +58,8 @@
       "id": "prena",
       "file": "/models/prena.glb",
       "source": "assets/source/blender/prena.blend",
-      "triangles": 11428,
-      "bytes": 808268,
+      "triangles": 51504,
+      "bytes": 1673036,
       "animations": [
         "Idle",
         "Walk",
@@ -61,8 +85,8 @@
       "id": "oty",
       "file": "/models/oty.glb",
       "source": "assets/source/blender/oty.blend",
-      "triangles": 8452,
-      "bytes": 459988,
+      "triangles": 41528,
+      "bytes": 1426228,
       "animations": [
         "Idle",
         "Walk",
@@ -88,8 +112,8 @@
       "id": "diva",
       "file": "/models/diva.glb",
       "source": "assets/source/blender/diva.blend",
-      "triangles": 8788,
-      "bytes": 439388,
+      "triangles": 45632,
+      "bytes": 1622504,
       "animations": [
         "Idle",
         "Walk",
@@ -115,8 +139,8 @@
       "id": "sparko",
       "file": "/models/sparko.glb",
       "source": "assets/source/blender/sparko.blend",
-      "triangles": 7760,
-      "bytes": 390708,
+      "triangles": 40476,
+      "bytes": 1298344,
       "animations": [
         "Idle",
         "Walk",
@@ -137,30 +161,6 @@
         "Serve",
         "Interact"
       ]
-    },
-    {
-      "id": "yatai-village",
-      "file": "/models/yatai-village.glb",
-      "source": "assets/source/blender/yatai-village.blend",
-      "triangles": 127556,
-      "bytes": 7066212,
-      "animations": []
-    },
-    {
-      "id": "lead-die",
-      "file": "/models/lead-die.glb",
-      "source": "assets/source/blender/lead-die.blend",
-      "triangles": 3636,
-      "bytes": 112468,
-      "animations": []
-    },
-    {
-      "id": "lead-coin",
-      "file": "/models/lead-coin.glb",
-      "source": "assets/source/blender/lead-coin.blend",
-      "triangles": 2000,
-      "bytes": 131796,
-      "animations": []
     }
   ],
   "colliders": [

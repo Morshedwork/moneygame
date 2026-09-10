@@ -27,4 +27,4 @@ const r = spawnSync(python, args, {
 });
 if (r.error) console.error(r.error.message);
 console.log("Headless Blender result:", r.status);
-process.exit(r.status ? 1 : 0);
+process.exit(r.status === 0 && !r.error ? 0 : 1);
