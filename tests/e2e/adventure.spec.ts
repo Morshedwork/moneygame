@@ -2,18 +2,35 @@ import { test, expect, Page } from "@playwright/test";
 async function learn(page: Page) {
   await page.getByRole("button", { name: "Try practice", exact: true }).click();
   await page.getByRole("button", { name: "Meet Sparko & learn" }).click();
+  await page
+    .getByRole("button", { name: "Try a practice question", exact: true })
+    .click();
   await page.locator(".answer-options button").nth(0).click();
   await expect(page.getByText("Let’s look at it another way.")).toBeVisible();
-  for (const answer of [1, 2, 1, 0, 1, 2]) {
+  for (const [lessonIndex, answer] of [1, 2, 1, 0, 1, 2].entries()) {
+    if (lessonIndex > 0)
+      await page
+        .getByRole("button", {
+          name: "Try a practice question",
+          exact: true,
+        })
+        .click();
     await page.locator(".answer-options button").nth(answer).click();
     await page
-      .getByRole("button", { name: /^(Continue|Start understanding check)$/ })
+      .getByRole("button", {
+        name: /^(Continue to next lesson|Review terms before final quiz)$/,
+      })
       .click();
   }
+  await page
+    .getByRole("button", { name: "Start the final quiz", exact: true })
+    .click();
   for (const [i, answer] of [0, 1, 1].entries()) {
     await page.locator(".answer-options button").nth(answer).click();
     if (i < 2)
-      await page.getByRole("button", { name: "Continue", exact: true }).click();
+      await page
+        .getByRole("button", { name: "Next question", exact: true })
+        .click();
   }
   await expect(
     page.getByRole("heading", { name: "Your first five coins." }),

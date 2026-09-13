@@ -1,0 +1,22 @@
+{
+  "generator": "tools/blender/build_districts.py",
+  "blender": "5.2.1 LTS",
+  "assets": [
+    {
+      "id": "yatai-sakura",
+      "file": "/models/yatai-sakura.glb",
+      "source": "assets/source/blender/yatai-sakura.blend",
+      "triangles": 48340,
+      "bytes": 2732336,
+      "animations": []
+    },
+    {
+      "id": "yatai-craft",
+      "file": "/models/yatai-craft.glb",
+      "source": "assets/source/blender/yatai-craft.blend",
+      "triangles": 80970,
+      "bytes": 4841996,
+      "animations": []
+    }
+  ]
+}

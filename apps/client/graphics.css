@@ -1,0 +1,11 @@
+.graphics-frame{position:relative;width:100%;height:100%;min-height:0;isolation:isolate}
+.graphics-frame>div:first-child{position:relative;z-index:0;isolation:isolate}
+.graphics-frame:fullscreen{width:100vw;height:100vh;background:#dcecf0;border-radius:0}
+.graphics-tools{position:absolute;right:12px;bottom:12px;z-index:8;max-width:min(285px,calc(100% - 24px));font-family:inherit;font-size:13px;line-height:1.5;color:#27263f;background:#fffcf4f5;border:1px solid #d0d8d4;border-radius:12px;box-shadow:0 4px 18px #122e3926}
+.graphics-tools summary{cursor:pointer;min-height:44px;padding:11px 16px;list-style-position:inside;font-weight:750;box-sizing:border-box}
+.graphics-tools[open]{padding:0 14px 14px;backdrop-filter:blur(12px)}
+.graphics-tools label{display:grid;gap:7px;font-size:12px;font-weight:700}
+.graphics-tools select{width:100%;min-height:44px;background:#fff;border:1px solid #9ba9b0;border-radius:6px;padding:6px;color:#27263f;font:inherit}
+.graphics-tools p{font-size:12px!important;line-height:1.5!important;max-width:250px;margin:12px 0}
+.graphics-tools button{min-height:44px;padding:8px 12px;border-radius:8px;border:1px solid #a99dc7;background:#fff;color:#463061;cursor:pointer;font:inherit}
+.graphics-tools :focus-visible{outline:3px solid #075a91;outline-offset:3px}

@@ -1,6 +1,7 @@
 import {
   Suspense,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -23,6 +24,9 @@ import { useGame } from "./store";
 import { leadTheme, mascotColors, mascotAccents } from "./theme";
 import { BoardPresentation, dieRotation } from "./board-presentation";
 import type { OrbitControls as OrbitType } from "three-stdlib";
+import { districts, type District } from "./village/content";
+import { GraphicsFrame, GraphicsPipeline, craftMaterial, polishMascot } from "./Graphics";
+import { useGraphics } from "./graphics-quality";
 export class SceneBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }
@@ -79,6 +83,7 @@ export function Mascot({
             : m.name.startsWith("Shadow accent") ? mascotAccents[name]
             : Object.entries(palette).find(([key]) => m.name.startsWith(key))?.[1];
           if (color && m.color) m.color.set(color);
+          polishMascot(m);
           return m;
         });
         o.material = Array.isArray(o.material) ? themed : themed[0];
@@ -108,17 +113,27 @@ export function Mascot({
     </group>
   );
 }
-function Village() {
-  const { scene } = useGLTF("/models/yatai-village.glb");
+function Village({ model = "/models/yatai-village.glb" }: { model?: string }) {
+  const quality = useGraphics(s => s.quality);
+  const asset = model === "/models/yatai-village.glb" && quality !== "balanced" ? "/models/yatai-village-hq.glb" : model;
+  const { scene } = useGLTF(asset);
   const copy = useMemo(() => clone(scene), [scene]);
   useEffect(() => {
+    const restore: Array<() => void> = [];
     copy.traverse((o: any) => {
       if (o.isMesh) {
         o.castShadow = true;
         o.receiveShadow = true;
+        const original = o.material;
+        const own = (Array.isArray(original) ? original : [original]).map(m => {
+          const material = m.clone(); craftMaterial(material, quality !== "balanced"); return material;
+        });
+        o.material = Array.isArray(original) ? own : own[0];
+        restore.push(() => { o.material = original; own.forEach(m => m.dispose()); });
       }
     });
-  }, [copy]);
+    return () => restore.forEach(fn => fn());
+  }, [copy, quality]);
   return <primitive object={copy} />;
 }
 function LeadCoin() {
@@ -141,23 +156,30 @@ function BoardDie({ presentation }: { presentation: BoardPresentation }) {
     position={[0, .88 + Math.sin(t * Math.PI) * 1.3, 6]}><primitive object={copy} /></group>;
 }
 function Lighting({ night = false }: { night?: boolean }) {
+  const quality = useGraphics(s => s.quality);
+  const shadowSize = quality === "ultra" ? 4096 : quality === "high" ? 2048 : 1024;
   return (
     <>
       <color attach="background" args={[night ? "#536881" : "#dcecf0"]} />
       <fog attach="fog" args={[night ? "#536881" : "#dcecf0", 65, 130]} />
-      <ambientLight intensity={night ? 0.65 : 0.7} />
-      <hemisphereLight args={["#cee9ff", "#819061", 0.7]} />
+      <ambientLight intensity={night ? 0.25 : 0.3} />
+      <hemisphereLight args={["#cee9ff", "#819061", 0.42]} />
+      <directionalLight position={[18, 9, -16]} intensity={0.45} color="#b7dfff" />
       <directionalLight
+        key={shadowSize}
         position={[-15, 30, 16]}
-        intensity={night ? 1.65 : 2.2}
+        intensity={night ? 2.0 : 2.7}
         color="#ffe1b3"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[shadowSize, shadowSize]}
+        shadow-camera-near={0.5}
+        shadow-camera-far={140}
         shadow-camera-left={-38}
         shadow-camera-right={38}
         shadow-camera-top={38}
         shadow-camera-bottom={-38}
-        shadow-normalBias={0.07}
+        shadow-normalBias={0.035}
+        shadow-bias={-0.0001}
       />
       {night && (
         <>
@@ -182,11 +204,13 @@ export function WorldPreview() {
   const reduced = useGame((s) => s.reduced);
   return (
     <SceneBoundary>
+      <GraphicsFrame>
       <Canvas
         shadows
         dpr={[1, 1.5]}
         camera={{ position: [33, 29, 42], fov: 39 }}
       >
+        <GraphicsPipeline />
         <Lighting night />
         <Suspense
           fallback={
@@ -217,6 +241,7 @@ export function WorldPreview() {
         </Suspense>
       </Canvas>
       <div className="drag-hint">↔ Drag to discover</div>
+      </GraphicsFrame>
     </SceneBoundary>
   );
 }
@@ -229,13 +254,16 @@ export function CharacterPortrait({
 }) {
   return (
     <SceneBoundary>
+      <GraphicsFrame>
       <Canvas
         shadows
         dpr={[1, 1.5]}
         camera={{ position: [0, 1.75, 5.4], fov: 36 }}
       >
-        <ambientLight intensity={1.2} />
-        <directionalLight position={[3, 5, 5]} intensity={2} />
+        <GraphicsPipeline portrait />
+        <ambientLight intensity={0.55} />
+        <directionalLight position={[-3, 5, 5]} intensity={2.4} color="#fff0da" />
+        <directionalLight position={[3, 2, -3]} intensity={1.5} color="#b9e5ff" />
         <Suspense fallback={<Html center><div className="scene-loading">Meeting your mentor…</div></Html>}>
           <Mascot name={name} animation={animation} />
           {name === "sparko" && <LeadCoin />}
@@ -254,6 +282,7 @@ export function CharacterPortrait({
           />
         </Suspense>
       </Canvas>
+      </GraphicsFrame>
     </SceneBoundary>
   );
 }
@@ -275,7 +304,9 @@ function Pawn({
   );
 }
 function BoardSceneReady({ onReady }: { onReady: (ready: boolean) => void }) {
-  useEffect(() => { onReady(true); }, [onReady]);
+  // Suspense cleans up layout effects when a quality change loads another GLB.
+  // Keep rolling locked until the visible scene is ready again.
+  useLayoutEffect(() => { onReady(true); return () => onReady(false); }, [onReady]);
   return null;
 }
 function FitBoardCamera() {
@@ -310,16 +341,19 @@ function BoardTiles({ activeTile }: { activeTile: number }) {
   }, [copy, activeTile]);
   return <primitive object={copy} />;
 }
-export function BoardWorld({ roster = [], presentation, onReady }: { roster?: any[]; presentation: BoardPresentation; onReady: (ready: boolean) => void }) {
-  const p = useGame((s) => s.player)!;
+export function BoardWorld({ roster = [], presentation, onReady, missionView }: { roster?: any[]; presentation: BoardPresentation; onReady: (ready: boolean) => void; missionView?: { id: string; avatar: string; game: { outcome: { sales?: number } | null } } }) {
+  const stored = useGame((s) => s.player);
+  const p = missionView || stored!;
   const g = p.game!;
   return (
     <SceneBoundary>
+      <GraphicsFrame>
       <Canvas
         shadows
         dpr={[1, 1.5]}
         camera={{ position: [22, 32, 30], fov: 38 }}
       >
+        <GraphicsPipeline />
         <Lighting />
         <FitBoardCamera />
         <Suspense
@@ -389,27 +423,35 @@ export function BoardWorld({ roster = [], presentation, onReady }: { roster?: an
           />
         </Suspense>
       </Canvas>
+      </GraphicsFrame>
     </SceneBoundary>
   );
 }
 const input = { x: 0, z: 0 };
-function Explorer({ onNear, paused }: { onNear: (v: any) => void; paused: boolean }) {
+function Explorer({ onNear, paused, district, onReady, destination }: {
+  onNear: (v: any) => void; paused: boolean; district: District;
+  onReady?: (ready: boolean) => void; destination?: string;
+}) {
   const group = useRef<Group>(null);
   const controls = useRef<OrbitType>(null);
   const { camera, gl } = useThree();
   const p = useGame((s) => s.player)!;
   const [animation, setAnimation] = useState("Idle");
   const keys = useRef(new Set<string>());
-  const pos = useRef(new Vector3(0, 0, 16));
+  const pos = useRef(new Vector3(...district.spawn));
   const velocity = useRef(new Vector3());
   const colliders = useRef<any[]>([]);
   const interactions = useRef<any[]>([]);
   const lastNear = useRef("");
   const ready = useRef(false);
+  const bounds = useRef({ minX: -30, maxX: 30, minZ: -25, maxZ: 27 });
+  const arrow = useRef<HTMLSpanElement>(null);
+  const distanceLabel = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const controller = new AbortController();
     ready.current = false;
-    fetch("/models/manifest.json", { signal: controller.signal })
+    onReady?.(false);
+    fetch(district.navigation, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error("Navigation assets are unavailable.");
         return r.json();
@@ -418,16 +460,18 @@ function Explorer({ onNear, paused }: { onNear: (v: any) => void; paused: boolea
         if (controller.signal.aborted) return;
         colliders.current = m.colliders;
         interactions.current = m.interactions;
+        if (m.bounds) bounds.current = m.bounds;
         ready.current = true;
         gl.domElement.dataset.ready = "true";
+        onReady?.(true);
       })
       .catch((error) => {
         if (error.name !== "AbortError")
           useGame.getState().setError("Village navigation could not load. Please refresh and try again.");
       });
-    camera.position.set(0, 6, 23);
+    camera.position.set(district.spawn[0], 6, district.spawn[2] + 7);
     const down = (e: KeyboardEvent) => {
-      if (["INPUT", "TEXTAREA"].includes((e.target as HTMLElement).tagName))
+      if ((e.target as HTMLElement).closest("input,textarea,select,button,[contenteditable=true]"))
         return;
       if (
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
@@ -450,12 +494,21 @@ function Explorer({ onNear, paused }: { onNear: (v: any) => void; paused: boolea
       input.x = 0;
       input.z = 0;
     };
-  }, [camera, gl]);
+  }, [camera, gl, district, onReady]);
   useFrame((_, delta) => {
     if (!ready.current) return;
+    const target = interactions.current.find(v => v.id === destination);
+    if (target && arrow.current && distanceLabel.current) {
+      const offset = new Vector3(...target.position).sub(pos.current);
+      const forward = new Vector3(); camera.getWorldDirection(forward); forward.y = 0; forward.normalize();
+      const right = new Vector3().crossVectors(forward, new Vector3(0,1,0));
+      arrow.current.style.transform = `rotate(${Math.atan2(offset.dot(right), offset.dot(forward))}rad)`;
+      distanceLabel.current.textContent = `${Math.round(offset.length())} m`;
+    }
     if (paused) {
       velocity.current.set(0, 0, 0);
       keys.current.clear();
+      input.x = 0; input.z = 0;
       if (animation !== "Idle") setAnimation("Idle");
       return;
     }
@@ -493,9 +546,9 @@ function Explorer({ onNear, paused }: { onNear: (v: any) => void; paused: boolea
           Math.abs(z - c.z) < c.d / 2 + 0.36,
       );
     if (free(proposed.x, pos.current.z))
-      pos.current.x = MathUtils.clamp(proposed.x, -30, 30);
+      pos.current.x = MathUtils.clamp(proposed.x, bounds.current.minX, bounds.current.maxX);
     if (free(pos.current.x, proposed.z))
-      pos.current.z = MathUtils.clamp(proposed.z, -25, 27);
+      pos.current.z = MathUtils.clamp(proposed.z, bounds.current.minZ, bounds.current.maxZ);
     const change = pos.current.clone().sub(before);
     camera.position.add(change);
     controls.current?.target.set(pos.current.x, 1.5, pos.current.z);
@@ -517,8 +570,9 @@ function Explorer({ onNear, paused }: { onNear: (v: any) => void; paused: boolea
   });
   return (
     <>
-      <group ref={group}>
+      <group ref={group} position={district.spawn}>
         <Mascot name={p.avatar} animation={animation} scale={0.9} />
+        {destination && <Html center position={[0,3.5,0]} style={{pointerEvents:"none"}}><div className="v-wayfinding"><span ref={arrow}>↑</span><span ref={distanceLabel}>…</span></div></Html>}
       </group>
       <OrbitControls
         ref={controls}
@@ -529,7 +583,7 @@ function Explorer({ onNear, paused }: { onNear: (v: any) => void; paused: boolea
         maxPolarAngle={1.35}
         enableDamping
         dampingFactor={0.1}
-        target={[0, 1.5, 16]}
+        target={[district.spawn[0], 1.5, district.spawn[2]]}
       />
     </>
   );
@@ -561,11 +615,16 @@ function Wanderer({
     </group>
   );
 }
-export function VillageWorld({ onNear, paused = false }: { onNear: (v: any) => void; paused?: boolean }) {
+export function VillageWorld({ onNear, paused = false, district = districts[0], onReady, destination }: {
+  onNear: (v: any) => void; paused?: boolean; district?: District;
+  onReady?: (ready: boolean) => void; destination?: string;
+}) {
   return (
     <SceneBoundary>
+      <GraphicsFrame>
       <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 6, 23], fov: 52 }}>
-        <Lighting night />
+        <GraphicsPipeline />
+        <Lighting night={district.night} />
         <Suspense
           fallback={
             <Html center>
@@ -573,22 +632,23 @@ export function VillageWorld({ onNear, paused = false }: { onNear: (v: any) => v
             </Html>
           }
         >
-          <Village />
-          <Explorer onNear={onNear} paused={paused} />
-          <Mascot name="sparko" position={[0, 0.1, 3]} animation="Wave" />
-          <Mascot name="oty" position={[-17, 0.9, 13]} animation="Celebrate" />
-          <Mascot name="diva" position={[16, 0.1, 5]} animation="Talk" />
-          <Mascot name="lido" position={[-15, 0.1, 7]} animation="Explain" />
-          {["prena", "lido", "diva", "oty", "prena", "lido"].map((name, i) => (
+          <Village model={district.model} />
+          <Explorer onNear={onNear} paused={paused} district={district} onReady={onReady} destination={destination}/>
+          {district.sites.map(site => <group key={site.id}>
+            <Mascot name={site.mentor} position={site.position} animation={destination === site.id ? "Wave" : "Idle"}/>
+            <Html center position={[site.position[0], site.position[1]+3.3, site.position[2]]} style={{pointerEvents:"none"}}><div className={`v-world-label ${destination===site.id ? "destination" : ""}`}>{destination===site.id ? "↓ " : ""}{site.name}</div></Html>
+          </group>)}
+          {["prena", "lido", "diva"].map((name, i) => (
             <Wanderer
               key={i}
               name={name}
-              center={[i % 2 ? 5 : -5, 0, -13 + i * 6]}
+              center={district.id === "festival" ? [i % 2 ? 5 : -5, 0, -13 + i * 6] : ([[0,0,12],[0,0,-12],[-12,0,-7]][i] as [number,number,number])}
               phase={i}
             />
           ))}
         </Suspense>
       </Canvas>
+      </GraphicsFrame>
     </SceneBoundary>
   );
 }

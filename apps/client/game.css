@@ -1040,6 +1040,17 @@ textarea {
   grid-template-columns: 1.3fr 0.8fr;
   gap: 24px;
 }
+.learning-layout.learning-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+.learning-only .lesson-stage {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.65fr) minmax(0, 1.35fr);
+}
+.learning-only .lesson-sparko {
+  height: 100%;
+  min-height: 430px;
+}
 .lesson-stage {
   border: 1px solid var(--line);
   border-radius: 15px;
@@ -1079,6 +1090,81 @@ textarea {
   font-size: 12px;
   line-height: 1.8;
 }
+.term-definitions,
+.quiz-term-review {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 20px 0;
+}
+.term-definitions > div,
+.quiz-term-review > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 15px;
+  border: 1px solid #dce7f5;
+  border-radius: 10px;
+  background: #f7faff;
+}
+.term-definitions b,
+.quiz-term-review b {
+  color: var(--navy);
+  font-size: 13px;
+}
+.term-definitions span,
+.quiz-term-review span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.quiz-term-review {
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+}
+.lesson-why,
+.worked-example {
+  padding: 16px 17px;
+  border-left: 3px solid #91acd9;
+  background: #f8fafd;
+  margin-top: 12px;
+}
+.worked-example {
+  border-left-color: #e3b84e;
+  background: #fffaf0;
+}
+.lesson-why > b,
+.worked-example > b {
+  display: block;
+  color: var(--navy);
+  font-size: 11px;
+  margin-bottom: 5px;
+}
+.lesson-why p,
+.worked-example p {
+  margin: 0;
+}
+.remember-rule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 15px;
+  border-radius: 9px;
+  background: #eef6f1;
+  color: #34775f;
+}
+.remember-rule span {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+}
+.remember-rule b {
+  font-size: 11px;
+  letter-spacing: 0.2px;
+}
+.lesson-teaching > .button {
+  margin-top: 22px;
+}
 .question-card {
   padding: 28px;
   background: white;
@@ -1090,6 +1176,14 @@ textarea {
   font-size: 21px;
   line-height: 1.45;
   margin: 13px 0 25px;
+}
+.practice-term {
+  display: block;
+  margin-top: 14px;
+  color: #6c82a1;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.8px;
 }
 .answer-options {
   display: flex;
@@ -2843,7 +2937,14 @@ td small {
   .lesson-stage {
     display: block;
   }
+  .learning-only .lesson-stage {
+    display: block;
+  }
   .lesson-sparko {
+    height: 240px;
+    min-height: 0;
+  }
+  .learning-only .lesson-sparko {
     height: 240px;
     min-height: 0;
   }

@@ -53,9 +53,12 @@ import {
   WorldPreview,
   CharacterPortrait,
   BoardWorld,
-  VillageWorld,
-  TouchControls,
 } from "./World";
+import { VillageExperience } from "./village/VillageExperience";
+import HeroLab from "./hero-lab/HeroLab";
+import { heroCompleted } from "../../packages/hero-lab";
+import { ShopSetup } from "./shop/ShopSetup";
+import { BoardEventCards } from "./board-cards/BoardEventCards";
 const Brand = () => (
   <span className="brand">
     <span className="brand-symbol">✦</span>
@@ -134,6 +137,7 @@ function Landing() {
               adventure at a time.
             </p>
             <div className="hero-actions">
+              <a className="button primary" href="/mission">Play four-quarter Money Quest</a>
               <Button onClick={() => setPage("signup")}>
                 Start your adventure <ArrowUpRight size={19} />
               </Button>
@@ -506,6 +510,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       ? [
           [Home, "dashboard", "Overview"],
           [BookOpen, "learn", "Learning"],
+          [Sparkles, "hero-lab", "Hero Lab"],
           [Dices, "board", "My adventure"],
           [Map, "village", "Yatai Village"],
           [Store, "journal", "My business"],
@@ -702,6 +707,10 @@ function Dashboard() {
         <h2>Your adventure map</h2>
         <span>No rush. You set the pace.</span>
       </div>
+      <section className="panel hero-lab-invite">
+        <div><Chip>NEW · THE HERO LAB</Chip><h2>Twelve little trails. One bigger adventure.</h2><p>Discover your strengths, solve festival challenges, design a sign and bring your idea to life. {heroCompleted(p.heroLab)} of 12 learning stamps collected.</p></div>
+        <Button onClick={() => setPage("hero-lab")}>Explore the Hero Lab <Sparkles size={18} /></Button>
+      </section>
       <div className="journey-cards">
         {[
           [
@@ -854,6 +863,11 @@ function Learning() {
   const [cursor, setCursor] = useState(p?.rewarded ? 0 : p?.lesson || 0);
   const [gateCursor, setGateCursor] = useState(p?.gate || 0);
   const [review, setReview] = useState(!!p?.rewarded);
+  const [stage, setStage] = useState<"learn" | "practice">(
+    p?.lesson === lessons.length && (p?.gate || 0) > 0
+      ? "practice"
+      : "learn",
+  );
   const [answered, setAnswered] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   if (!p) return null;
@@ -861,6 +875,10 @@ function Learning() {
   const index = isGate ? gateCursor : cursor;
   const lesson = lessons[Math.min(cursor, lessons.length - 1)];
   const question = isGate ? gate[Math.min(index, gate.length - 1)] : lesson;
+  const quizTerms: ReadonlyArray<readonly [string, string]> = lessons.flatMap(
+    (item) =>
+      item.terms as ReadonlyArray<readonly [string, string]>,
+  );
   const completed = !review && p.rewarded;
   if (completed && answered)
     return (
@@ -904,31 +922,39 @@ function Learning() {
       <div className="page-heading">
         <div>
           <Chip>
-            {isGate ? "PUTTING IT ALL TOGETHER" : "FINANCE FOUNDATIONS"}
+            {isGate ? "FINAL QUIZ" : "FINANCE FOUNDATIONS"}
           </Chip>
           <h1>
-            {isGate ? "Your understanding check." : "A little money wisdom."}
+            {isGate ? "Show what you understand." : "Learn it. See it. Try it."}
           </h1>
           <p>
             {isGate
-              ? "Take your time. You can try as many times as you need."
-              : "Watch. Wonder. Try it for yourself."}
+              ? stage === "learn"
+                ? "Review the key words first. Start the quiz when you feel ready."
+                : "Use what you learned. You can try as many times as you need."
+              : stage === "learn"
+                ? "First, understand the words and example. Practice comes next."
+                : "Now use the idea in one short practice question."}
           </p>
         </div>
         <span className="chapter-chip">
           {isGate
-            ? `CHECK ${Math.min(p.gate + 1, 3)} / 3`
-            : `LESSON ${cursor + 1} / 6`}
+            ? stage === "learn"
+              ? "LESSONS COMPLETE"
+              : `QUESTION ${Math.min(p.gate + 1, gate.length)} / ${gate.length}`
+            : `LESSON ${cursor + 1} / ${lessons.length}`}
         </span>
       </div>
       <div className="learning-progress">
         <span
           style={{
-            width: `${((isGate ? 6 + p.gate : cursor + 1) / 9) * 100}%`,
+            width: `${((isGate ? lessons.length + p.gate : cursor + 1) / (lessons.length + gate.length)) * 100}%`,
           }}
         />
       </div>
-      <div className="learning-layout">
+      <div
+        className={`learning-layout ${stage === "learn" ? "learning-only" : ""}`}
+      >
         <section className="lesson-stage">
           <div className="lesson-sparko">
             <CharacterPortrait
@@ -940,79 +966,129 @@ function Learning() {
             </div>
           </div>
           <div className="lesson-teaching">
-            <Chip>{isGate ? "YOU’VE GOT THIS" : lesson.concept}</Chip>
-            <h2>{isGate ? "Let’s make sure it clicks." : lesson.title}</h2>
+            <Chip>{isGate ? "QUICK REVIEW" : lesson.concept}</Chip>
+            <h2>{isGate ? "Words worth knowing" : lesson.title}</h2>
             <p>
               {isGate
-                ? "Use what you learned. A thoughtful answer is more important than a fast one."
+                ? "Read through these meanings once more. The quiz asks you to use them in real money stories, not just memorise them."
                 : lesson.text}
             </p>
-            <CoinStory mode={lesson.visual} />
+            {isGate ? (
+              <div className="quiz-term-review">
+                {quizTerms.map(([term, meaning]) => (
+                  <div key={term}>
+                    <b>{term}</b>
+                    <span>{meaning}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="term-definitions">
+                  {lesson.terms.map(([term, meaning]) => (
+                    <div key={term}>
+                      <b>{term}</b>
+                      <span>{meaning}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="lesson-why">
+                  <b>Why it matters</b>
+                  <p>{lesson.why}</p>
+                </div>
+                <div className="worked-example">
+                  <b>Worked example</b>
+                  <p>{lesson.example}</p>
+                </div>
+                <div className="remember-rule">
+                  <span>REMEMBER</span>
+                  <b>{lesson.rule}</b>
+                </div>
+                <CoinStory mode={lesson.visual} />
+              </>
+            )}
+            {stage === "learn" && (
+              <Button onClick={() => setStage("practice")}>
+                {isGate ? "Start the final quiz" : "Try a practice question"}
+                <ArrowRight size={16} />
+              </Button>
+            )}
           </div>
         </section>
-        <section className="question-card">
-          <Chip>{review ? "REVISIT & PRACTICE" : "YOUR TURN"}</Chip>
-          <h3>
-            {isGate
-              ? (question as (typeof gate)[number]).question
-              : (question as (typeof lessons)[number]).prompt}
-          </h3>
-          <div className="answer-options">
-            {question.choices.map((c, i) => (
-              <button
-                key={i}
-                disabled={busy || !!(answered && correct)}
-                className={
-                  selected === i ? (correct ? "correct" : "incorrect") : ""
-                }
-                onClick={() => answer(i)}
-              >
-                <span>{String.fromCharCode(65 + i)}</span>
-                {c}
-                {selected === i && correct && <Check size={18} />}
-              </button>
-            ))}
-          </div>
-          {answered && (
-            <div
-              className={correct ? "answer-feedback good" : "answer-feedback"}
-              role="status"
-            >
-              <b>
-                {correct
-                  ? "That’s it. Nicely thought through!"
-                  : "Let’s look at it another way."}
-              </b>
-              <p>{review ? question.explain : feedback?.text}</p>
-              {correct && (
-                <Button
-                  onClick={() => {
-                    setAnswered(false);
-                    setSelected(null);
-                    if (review) {
-                      if (cursor === 5) setPage("dashboard");
-                      else setCursor(cursor + 1);
-                    } else {
-                      setCursor(p.lesson);
-                      setGateCursor(p.gate);
-                    }
-                  }}
+        {stage === "practice" && (
+          <section className="question-card">
+            <Chip>
+              {isGate ? "FINAL QUIZ" : review ? "REVISIT & PRACTICE" : "PRACTICE"}
+            </Chip>
+            {!isGate && <span className="practice-term">Use: {lesson.concept}</span>}
+            <h3>
+              {isGate
+                ? (question as (typeof gate)[number]).question
+                : (question as (typeof lessons)[number]).prompt}
+            </h3>
+            <div className="answer-options">
+              {question.choices.map((c, i) => (
+                <button
+                  key={i}
+                  disabled={busy || !!(answered && correct)}
+                  className={
+                    selected === i ? (correct ? "correct" : "incorrect") : ""
+                  }
+                  onClick={() => answer(i)}
                 >
-                  {review && cursor === 5
-                    ? "Back to overview"
-                    : cursor === 5 && !isGate
-                      ? "Start understanding check"
-                      : "Continue"}
-                  <ArrowRight size={16} />
-                </Button>
-              )}
+                  <span>{String.fromCharCode(65 + i)}</span>
+                  {c}
+                  {selected === i && correct && <Check size={18} />}
+                </button>
+              ))}
             </div>
-          )}
-          <p className="gentle-note">
-            <Heart size={14} /> Mistakes are part of learning. There is no
-            penalty.
-          </p>
-        </section>
+            {answered && (
+              <div
+                className={correct ? "answer-feedback good" : "answer-feedback"}
+                role="status"
+              >
+                <b>
+                  {correct
+                    ? "That’s it. Nicely thought through!"
+                    : "Let’s look at it another way."}
+                </b>
+                <p>{review ? question.explain : feedback?.text}</p>
+                {correct && (
+                  <Button
+                    onClick={() => {
+                      setAnswered(false);
+                      setSelected(null);
+                      if (review) {
+                        if (cursor === lessons.length - 1) setPage("dashboard");
+                        else {
+                          setCursor(cursor + 1);
+                          setStage("learn");
+                        }
+                      } else {
+                        setCursor(p.lesson);
+                        setGateCursor(p.gate);
+                        if (!isGate) setStage("learn");
+                      }
+                    }}
+                  >
+                    {review && cursor === lessons.length - 1
+                      ? "Back to overview"
+                      : cursor === lessons.length - 1 && !isGate
+                        ? "Review terms before final quiz"
+                        : isGate
+                          ? "Next question"
+                          : "Continue to next lesson"}
+                    <ArrowRight size={16} />
+                  </Button>
+                )}
+              </div>
+            )}
+            <p className="gentle-note">
+              <Heart size={14} /> Mistakes are part of learning. There is no
+              penalty.
+            </p>
+          </section>
+        )}
       </div>
       <div className="lesson-index">
         {lessons.map((l, i) => (
@@ -1026,10 +1102,6 @@ function Learning() {
 }
 function Setup() {
   const { player: p, send, busy, setPage } = useGame();
-  const [name, setName] = useState("Little Bento Co.");
-  const [price, setPrice] = useState(6);
-  const [color, setColor] = useState<string>(leadTheme.sky);
-  const [goal, setGoal] = useState("Learn from every choice");
   if (!p?.rewarded)
     return (
       <Locked
@@ -1048,119 +1120,9 @@ function Setup() {
         page={nextPage(p)}
       />
     );
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <Chip>FROM A BRIGHT IDEA TO YOUR OWN LITTLE BUSINESS</Chip>
-          <h1>Make it yours.</h1>
-          <p>One stall. So many possibilities.</p>
-        </div>
-        <span className="chapter-chip">5 LEARNING COINS READY</span>
-      </div>
-      <div className="setup-layout">
-        <form
-          className="panel"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (await send("setup", { name, price, color, goal }))
-              setPage("board");
-          }}
-        >
-          <label>
-            Your business name
-            <input
-              value={name}
-              minLength={2}
-              maxLength={32}
-              required
-              onChange={(e) => setName(e.target.value)}
-            />
-          </label>
-          <label>
-            Your first bento price <b>{price} LEAD Coins</b>
-            <input
-              type="range"
-              min={4}
-              max={8}
-              value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
-            />
-            <div className="range-labels">
-              <span>4 · more affordable</span>
-              <span>8 · higher margin</span>
-            </div>
-          </label>
-          <div className="price-explainer">
-            <span>
-              Price <b>{price}</b>
-            </span>
-            <span>
-              − Cost <b>3</b>
-            </span>
-            <span>
-              = Profit per sale <b>{price - 3}</b>
-            </span>
-          </div>
-          <p className="muted">
-            A higher price can mean more profit per sale, but fewer customers
-            may be able to afford it.
-          </p>
-          <label>
-            Banner color
-            <div className="color-choices">
-              {[leadTheme.sky, leadTheme.coral, leadTheme.green, leadTheme.yellow, leadTheme.lavender].map((c) => (
-                <button
-                  aria-label={"Choose " + c + " banner"}
-                  type="button"
-                  key={c}
-                  style={{ background: c }}
-                  className={color === c ? "selected" : ""}
-                  onClick={() => setColor(c)}
-                >
-                  {color === c && <Check size={17} />}
-                </button>
-              ))}
-            </div>
-          </label>
-          <label>
-            My goal for this chapter
-            <input
-              value={goal}
-              onChange={(e) => setGoal(e.target.value)}
-              minLength={2}
-              maxLength={100}
-            />
-          </label>
-          <Button type="submit" disabled={busy}>
-            Open my business <ArrowRight size={18} />
-          </Button>
-        </form>
-        <div className="setup-preview">
-          <div className="business-sign" style={{ background: color }}>
-            {name || "YOUR BENTO STALL"}
-            <small>FRESH IDEAS. FRESH BENTO.</small>
-          </div>
-          <div className="setup-mascot">
-            <CharacterPortrait name={p.avatar} animation="Wave" />
-          </div>
-          <div className="avatar-choices">
-            {mascots.map((m) => (
-              <button
-                key={m.id}
-                className={m.id === p.avatar ? "selected" : ""}
-                onClick={() => send("profile", { avatar: m.id })}
-              >
-                <i style={{ background: m.color }} />
-                {m.name}
-              </button>
-            ))}
-          </div>
-          <p>Choose the character who feels like you.</p>
-        </div>
-      </div>
-    </>
-  );
+  return <ShopSetup avatar={p.avatar} busy={busy}
+    onAvatar={(avatar) => { void send("profile", { avatar }); }}
+    onOpen={async (values) => { if (await send("setup", values)) setPage("board"); }} />;
 }
 function Locked({
   title,
@@ -1190,8 +1152,7 @@ function Locked({
   );
 }
 function Board() {
-  const { player: p, send, busy, presenting, reduced, setPage } = useGame();
-  const [amount, setAmount] = useState(0);
+  const { player: p, send, busy, presenting, reduced, setPage, error } = useGame();
   const [room, setRoom] = useState<any>(null);
   const [sceneReady, setSceneReady] = useState(false);
   const g = p?.game;
@@ -1234,7 +1195,6 @@ function Board() {
     );
   const myTurn = !room?.started || room.members[room.turn] === p?.id;
   const disabled = busy || presenting || motion || !sceneReady || !myTurn || !!(room && !room.started);
-  const decision = (data: any) => send("decision", data);
   return (
     <>
       <div className="board-top">
@@ -1301,154 +1261,16 @@ function Board() {
               ? `${presentation.replacement ? "Replacement" : "You rolled"} ${presentation.value}${presentation.replacement ? " · Stay on this space" : ` · ${g.path.length} ${g.path.length === 1 ? "space" : "spaces"}${g.path.length < presentation.value ? " to finish" : ""}`}`
               : "Roll to begin your village journey"}
           </div>
-          <Chip>
-            {g.pending
-              ? "A LITTLE DECISION"
-              : g.outcome?.sales !== undefined
-                ? "A MOMENT TO LEARN"
-                : "YOUR NEXT LITTLE STEP"}
-          </Chip>
-          <h2>
-            {presentation.rolling ? "A little luck, a new possibility." : motion ? "A little adventure is unfolding…" : g.outcome?.title}
-          </h2>
-          <p>
-            {motion
-              ? presentation.rolling ? "The die settles first. Then your character follows the path." : "Follow your character around the village."
-              : g.outcome?.text}
-          </p>
-          {g.outcome?.sales !== undefined && !motion && (
-            <>
-              <div className="sale-math">
-                <span>
-                  Revenue<b>+{g.outcome.revenue}</b>
-                </span>
-                <span>
-                  Cost<b>−{g.outcome.cost}</b>
-                </span>
-                <span>
-                  Profit<b>{g.outcome.profit}</b>
-                </span>
-              </div>
-              <div className="budget-chips">
-                <small>CUSTOMER BUDGETS</small>
-                {g.outcome.budgets?.map((b, i) => (
-                  <span key={i}>
-                    {b} <Coins size={11} />
-                  </span>
-                ))}
-              </div>
-            </>
-          )}
-          {g.pending === "big-sale" && (
-            <div className="decision-buttons">
-              <Button
-                disabled={disabled}
-                onClick={() => decision({ discount: 0 })}
-              >
-                Keep price · {g.price}
-              </Button>
-              <Button
-                secondary
-                disabled={disabled}
-                onClick={() => decision({ discount: 1 })}
-              >
-                One-time discount · {g.price - 1}
-              </Button>
-            </div>
-          )}
-          {["bank", "festival"].includes(g.pending || "") && (
-            <div className="decision-buttons">
-              <label>
-                Choose coins
-                <input
-                  type="range"
-                  min={0}
-                  max={Math.min(g.pending === "bank" ? 5 : 2, g.wallet)}
-                  value={Math.min(amount, g.wallet)}
-                  onChange={(e) => setAmount(+e.target.value)}
-                />
-              </label>
-              <Button
-                disabled={disabled}
-                onClick={() =>
-                  decision({
-                    amount: Math.min(
-                      amount,
-                      g.pending === "bank" ? 5 : 2,
-                      g.wallet,
-                    ),
-                  })
-                }
-              >
-                {g.pending === "bank" ? "Save" : "Contribute"}{" "}
-                {Math.min(amount, g.pending === "bank" ? 5 : 2, g.wallet)} coins
-              </Button>
-            </div>
-          )}
-          {g.pending === "advertising" && (
-            <div className="decision-buttons">
-              {[0, 2, 4].map((n) => (
-                <Button
-                  key={n}
-                  secondary
-                  disabled={disabled || n > g.wallet}
-                  onClick={() => decision({ amount: n })}
-                >
-                  {n} coins → {n / 2 + 1} extra visitors
-                </Button>
-              ))}
-            </div>
-          )}
-          {g.pending === "returns" && (
-            <div className="decision-buttons">
-              <Button
-                disabled={disabled}
-                onClick={() => decision({ choice: "refund" })}
-              >
-                Give a fair refund
-              </Button>
-              <Button
-                secondary
-                disabled={disabled}
-                onClick={() => decision({ choice: "replace" })}
-              >
-                Try a replacement · 3 coins
-              </Button>
-            </div>
-          )}
-          {g.pending === "fortune" && (
-            <div className="decision-buttons">
-              <Button
-                disabled={disabled}
-                onClick={() => decision({ accept: true })}
-              >
-                Take this opportunity
-              </Button>
-              <Button
-                secondary
-                disabled={disabled}
-                onClick={() => decision({ accept: false })}
-              >
-                Keep my coins
-              </Button>
-            </div>
-          )}
-          {["ack", "bench"].includes(g.pending || "") && (
-            <Button disabled={disabled} onClick={() => decision({})}>
-              A moment to reflect <Check size={17} />
-            </Button>
-          )}
-          {!g.pending && (
-            <Button disabled={disabled} onClick={() => send("roll", { expectedTurn: g.turn })}>
-              <Dices size={20} />
-              {busy || presentation.rolling
-                ? "Rolling…"
-                : motion ? "Moving…"
-                : myTurn
-                  ? "Roll the die"
-                  : "Waiting for your friend"}
-            </Button>
-          )}
+          <BoardEventCards
+            game={g}
+            motion={motion}
+            reduced={reduced}
+            disabled={disabled}
+            myTurn={myTurn && !(room && !room.started)}
+            error={error}
+            onDecision={(data) => send("decision", data)}
+            onRoll={() => send("roll", { expectedTurn: g.turn })}
+          />
           {g.revisionAllowed && !g.pending && !motion && (
             <div className="price-revise">
               <small>RETHINK YOUR PRICE?</small>
@@ -1458,7 +1280,7 @@ function Board() {
                   .map((n) => (
                     <button
                       key={n}
-                      disabled={busy}
+                      disabled={disabled}
                       onClick={() => send("price", { price: n })}
                     >
                       {n === g.price ? "Keep" : `${n} coins`}
@@ -1713,17 +1535,6 @@ function Journal() {
 }
 function VillagePage() {
   const p = useGame((s) => s.player);
-  const setPage = useGame((s) => s.setPage);
-  const [near, setNear] = useState<any>(null);
-  const [dialog, setDialog] = useState(false);
-  useEffect(() => {
-    const listener = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "e" && near) setDialog(true);
-      if (e.key === "Escape") setDialog(false);
-    };
-    window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
-  }, [near]);
   if (p?.game?.phase !== "village")
     return (
       <Locked
@@ -1733,69 +1544,7 @@ function VillagePage() {
         page={p ? nextPage(p) : "learn"}
       />
     );
-  const stories: Record<string, string> = {
-    bento:
-      "Your first business started right here. Every customer has a story, and every choice helps you grow. You can revisit all of your decisions in your journal.",
-    bank: "Prena says: savings give tomorrow a little breathing room. A transfer is not profit—you are setting aside money you already own.",
-    town: "Lido says: leaders help their community. The festival, paths, and public spaces are places we all share. Future chapters will explore taxes and community decisions.",
-    garden:
-      "Diva says: leave a worry at the fortune tree. Different experiences help us see new possibilities. You belong here.",
-    stage:
-      "Oty says: be yourself and share what you learned. You completed your first chapter. That is something worth celebrating!",
-  };
-  return (
-    <div className="explore-page">
-      <div className="explore-title">
-        <Chip>WELCOME HOME, HERO-PRENEUR</Chip>
-        <h1>Yatai Village</h1>
-        <span>BLUE HOUR · A LITTLE WORLD OF POSSIBILITY</span>
-      </div>
-      <div className="explore-canvas">
-        <VillageWorld onNear={setNear} paused={dialog} />
-        <div className="village-compass">
-          N<br />
-          <span>✦</span>
-        </div>
-        <div className="village-controls">
-          <b>YOUR WORLD, YOUR PACE</b>
-          <span>W A S D / arrows · Move</span>
-          <span>Drag · Look around</span>
-          <span>Shift · Run &nbsp; E · Interact</span>
-        </div>
-        <TouchControls />
-        {near && (
-          <button className="interact-prompt" onClick={() => setDialog(true)}>
-            <kbd>E</kbd> Explore {near.name} <ArrowRight size={16} />
-          </button>
-        )}
-        {dialog && near && (
-          <div className="village-dialog" role="dialog" aria-label={near.name}>
-            <button
-              className="icon-button close"
-              aria-label="Close conversation"
-              onClick={() => setDialog(false)}
-            >
-              <X size={19} />
-            </button>
-            <Chip>A LITTLE VILLAGE WISDOM</Chip>
-            <h2>{near.name}</h2>
-            <p>{stories[near.id]}</p>
-            <Button onClick={() => setDialog(false)}>
-              Keep exploring <ArrowRight size={17} />
-            </Button>
-            {near.id === "bento" && (
-              <button
-                className="inline-link"
-                onClick={() => setPage("journal")}
-              >
-                Open my journal
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <VillageExperience/>;
 }
 function Friends() {
   const { practice, player: p, setError, setPage } = useGame();
@@ -2079,6 +1828,7 @@ function Parent() {
                 value={child.game?.phase || "Learning"}
                 label="Current chapter"
               />
+              <Stat icon={<Sparkles />} value={`${heroCompleted(child.heroLab)}/12`} label="Hero Lab learning stamps" />
             </div>
             {child.game?.reflection && (
               <div className="reflection-note">
@@ -2161,6 +1911,7 @@ function Admin() {
                 <th>Learner</th>
                 <th>Role</th>
                 <th>Lessons</th>
+                <th>Hero Lab</th>
                 <th>Chapter</th>
                 <th>Play access</th>
               </tr>
@@ -2175,6 +1926,7 @@ function Admin() {
                     <td>{r.name}</td>
                     <td>{r.role}</td>
                     <td>{r.lesson}/6</td>
+                    <td>{r.heroStamps ?? 0}/12</td>
                     <td>{r.phase}</td>
                     <td>
                       {r.role === "student" && (
@@ -2491,6 +2243,7 @@ export default function App() {
     const pages: Record<string, React.ReactNode> = {
       dashboard: <Dashboard />,
       learn: <Learning />,
+      "hero-lab": <HeroLab />,
       setup: <Setup />,
       board: <Board />,
       reflection: <Reflection />,
@@ -2519,7 +2272,7 @@ export default function App() {
   return (
     <>
       {content}
-      {error && (
+      {error && !(page === "hero-lab" && player?.role === "student" && !player.paused) && (
         <div className="global-error" role="alert">
           <Shield size={20} />
           <span>{error}</span>

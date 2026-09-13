@@ -1,5 +1,6 @@
 import { boardNames, gate, lessons, mascots } from "../curriculum";
 import { budgets, fortunes, markets, RULES_VERSION } from "./content";
+import { applyHeroCommand, HeroProgress, initialHeroProgress } from "../hero-lab";
 export type Role = "student" | "parent" | "admin";
 export type LedgerEntry = {
   id: string;
@@ -86,6 +87,7 @@ export type Player = {
   receipts: string[];
   paused: boolean;
   dailyMinutes: number;
+  heroLab?: HeroProgress;
 };
 export type Command = { id: string; type: string; [key: string]: unknown };
 export type Result = {
@@ -113,6 +115,7 @@ export function createPlayer(
     receipts: [],
     paused: false,
     dailyMinutes: 30,
+    heroLab: initialHeroProgress(),
   };
 }
 function requireThat(ok: unknown, message: string): asserts ok {
@@ -432,6 +435,10 @@ export function applyCommand(
       );
       p.language = String(c.language);
     }
+  } else if (c.type === "hero-lab") {
+    const result = applyHeroCommand(p.heroLab, c);
+    p.heroLab = result.progress;
+    feedback = result.feedback;
   } else if (c.type === "lesson" || c.type === "gate") {
     const isGate = c.type === "gate";
     requireThat(

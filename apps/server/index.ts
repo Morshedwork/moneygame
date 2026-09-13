@@ -10,6 +10,7 @@ import {
   Player,
 } from "../../packages/game-rules";
 import { leaveRoom, roomCommand } from "../../packages/game-rules/rooms";
+import { heroCompleted } from "../../packages/hero-lab";
 initializeApp();
 const db = getFirestore();
 const fail = (message: string) => {
@@ -196,6 +197,7 @@ export const leadAction = onCall(
               role: v.role,
               lesson: v.lesson,
               gate: v.gate,
+              heroStamps: heroCompleted(v.heroLab),
               paused: v.paused,
               phase: v.game?.phase || "learning",
               createdAt: v.createdAt,

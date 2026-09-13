@@ -1,0 +1,91 @@
+{
+  "id": "bento-showroom",
+  "file": "/models/bento-showroom.glb",
+  "source": "assets/source/blender/bento-showroom.blend",
+  "triangles": 54992,
+  "bytes": 2918152,
+  "animations": [],
+  "generator": "tools/blender/build_shop_showroom.py",
+  "blender": "5.2.1 LTS",
+  "inventory": [
+    {
+      "category": "Counter",
+      "name": "Bento tray 1",
+      "position": [
+        -2.02,
+        1.6,
+        1.42
+      ]
+    },
+    {
+      "category": "Counter",
+      "name": "Bento tray 2",
+      "position": [
+        -0.46,
+        1.6,
+        1.42
+      ]
+    },
+    {
+      "category": "Counter",
+      "name": "Bento tray 3",
+      "position": [
+        1.1,
+        1.6,
+        1.42
+      ]
+    },
+    {
+      "category": "Counter",
+      "name": "Chopsticks, napkins and soy sauce",
+      "position": [
+        2.4,
+        1.6,
+        1.4
+      ]
+    },
+    {
+      "category": "Shelves",
+      "name": "Tea tins and rice jars",
+      "position": [
+        0,
+        2.2,
+        -1.85
+      ]
+    },
+    {
+      "category": "Shelves",
+      "name": "Bowls and takeaway boxes",
+      "position": [
+        0,
+        3,
+        -1.85
+      ]
+    },
+    {
+      "category": "Kitchen",
+      "name": "Tea set and onigiri prep",
+      "position": [
+        0,
+        1.6,
+        -1.4
+      ]
+    },
+    {
+      "category": "Kitchen",
+      "name": "Fresh produce crate",
+      "position": [
+        4,
+        1,
+        -1.1
+      ]
+    }
+  ],
+  "dynamicLabels": [
+    "Shop_name_label",
+    "Shop_price_label"
+  ],
+  "openRoofPrefix": "RoofFront",
+  "interiorCutawayPrefix": "FrontDisplay",
+  "bannerMaterial": "Shop Banner"
+}

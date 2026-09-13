@@ -1,0 +1,34 @@
+[
+  {
+    "id": "festival", "name": "Festival Market", "subtitle": "Lantern-lit lanes & little businesses", "japanese": "屋台", "time": "Blue hour", "night": true,
+    "model": "/models/yatai-village.glb", "navigation": "/models/manifest.json", "spawn": [0, 0, 16], "color": "#f96366",
+    "description": "Serve a bento, plan a budget, and find your festival rhythm.",
+    "sites": [
+      {"id": "bento", "name": "Bento & Co.", "mentor": "sparko", "position": [0, 0, 3], "activity": "bento"},
+      {"id": "bank", "name": "Village Bank", "mentor": "prena", "position": [-15, 0, -3], "activity": "budget"},
+      {"id": "town", "name": "Town Hall", "mentor": "lido", "position": [0, 0, -17], "activity": "community"},
+      {"id": "garden", "name": "Fortune Garden", "mentor": "diva", "position": [19, 0, 4], "activity": "kindness"},
+      {"id": "stage", "name": "Festival Plaza", "mentor": "oty", "position": [-17, 0.9, 13], "activity": "rhythm"}
+    ]
+  },
+  {
+    "id": "sakura", "name": "Sakura Riverside", "subtitle": "A slower kind of adventure", "japanese": "桜", "time": "Spring morning", "night": false,
+    "model": "/models/yatai-sakura.glb", "navigation": "/models/yatai-sakura.navigation.json", "spawn": [0, 0, 15], "color": "#52a7da",
+    "description": "Cross the footbridge, share a picnic, and care for the river.",
+    "sites": [
+      {"id": "picnic", "name": "Sakura Picnic", "mentor": "oty", "position": [-9, 0, 9], "activity": "picnic"},
+      {"id": "tea", "name": "Riverside Tea House", "mentor": "prena", "position": [9, 0, 9], "activity": "tea"},
+      {"id": "river", "name": "River Care Club", "mentor": "diva", "position": [-9, 0, -7], "activity": "river"}
+    ]
+  },
+  {
+    "id": "craft", "name": "Lantern Craft Lane", "subtitle": "Small hands. Brilliant ideas.", "japanese": "工房", "time": "Golden evening", "night": true,
+    "model": "/models/yatai-craft.glb", "navigation": "/models/yatai-craft.navigation.json", "spawn": [0, 0, 15], "color": "#b698f5",
+    "description": "Make a paper fan, light a lantern pattern, and pitch your idea.",
+    "sites": [
+      {"id": "lantern", "name": "Lantern Workshop", "mentor": "lido", "position": [-9, 0, 9], "activity": "lantern"},
+      {"id": "paper", "name": "Paper Studio", "mentor": "oty", "position": [9, 0, 9], "activity": "paper"},
+      {"id": "makers", "name": "Little Makers Stage", "mentor": "sparko", "position": [-9, 0, -7], "activity": "makers"}
+    ]
+  }
+]
