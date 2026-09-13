@@ -26,6 +26,7 @@ import {
   Sparkles,
   Heart,
   Flag,
+  BarChart3,
 } from "lucide-react";
 import {
   createUserWithEmailAndPassword,
@@ -36,7 +37,7 @@ import {
   updateProfile,
   sendEmailVerification,
 } from "firebase/auth";
-import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, limit } from "firebase/firestore";
 import { auth, db, cloud, friendlyError } from "./firebase";
 import { useGame, ViewPlayer } from "./store";
 import {
@@ -59,6 +60,8 @@ import HeroLab from "./hero-lab/HeroLab";
 import { heroCompleted } from "../../packages/hero-lab";
 import { ShopSetup } from "./shop/ShopSetup";
 import { BoardEventCards } from "./board-cards/BoardEventCards";
+import { AdminLearningAnalytics, LearningReportsPage, LearningPulse, PlayerLearningReport } from "./learning/LearningReports";
+import { accountReport } from "../../packages/learning-report";
 const Brand = () => (
   <span className="brand">
     <span className="brand-symbol">✦</span>
@@ -514,6 +517,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           [Dices, "board", "My adventure"],
           [Map, "village", "Yatai Village"],
           [Store, "journal", "My business"],
+          [BarChart3, "reports", "Learning report"],
           [Users, "friends", "Play with friends"],
           [Settings, "settings", "Settings"],
         ]
@@ -620,6 +624,7 @@ function Dashboard() {
   const done = p.rewarded ? 100 : Math.round(((p.lesson + p.gate) / 9) * 100);
   return (
     <>
+      <LearningPulse />
       <div className="page-heading">
         <div>
           <Chip>EVERY DAY IS A CHANCE TO GROW</Chip>
@@ -966,6 +971,7 @@ function Learning() {
           }}
         />
       </div>
+      <LearningPulse />
       <div
         className={`learning-layout ${stage === "learn" ? "learning-only" : ""}`}
       >
@@ -1857,6 +1863,7 @@ function Parent() {
               “Tell me about a choice you made. What surprised you? What would
               you like to try next?”
             </p>
+            <details className="lr-parent-summary"><summary>View learning report & download</summary><PlayerLearningReport player={child} /></details>
           </section>
         ))
       )}
@@ -1868,17 +1875,36 @@ function Admin() {
   const [rows, setRows] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loaded, setLoaded] = useState(false);
-  async function refresh() {
-    try {
-      setRows((await cloud("adminList")).players);
-      setLoaded(true);
-    } catch (e) {
-      setError(friendlyError(e));
-    }
-  }
+  const [revision, setRevision] = useState(0);
+  const refresh = () => setRevision(n => n + 1);
   useEffect(() => {
-    refresh();
-  }, []);
+    let disposed = false;
+    let unsubscribe = () => {};
+    setLoaded(false);
+    // Existing /views rules are authoritative. A forged browser role cannot
+    // read the collection. Realtime snapshots are required while pupils learn.
+    (async () => {
+      try {
+        const token = await auth.currentUser?.getIdTokenResult();
+        if (!token?.claims.admin) throw new Error("An approved administrator account is required.");
+        if (disposed) return;
+        unsubscribe = onSnapshot(query(collection(db, "views"), limit(200)), snapshot => {
+          if (disposed) return;
+          setRows(snapshot.docs.map(d => {
+            const v = d.data() as ViewPlayer;
+            return { id: d.id, name: v.name, role: v.role, lesson: v.lesson, gate: v.gate,
+              heroStamps: heroCompleted(v.heroLab), paused: v.paused,
+              phase: v.game?.phase || "learning", createdAt: v.createdAt,
+              ...(v.role === "student" ? { learningReport: accountReport(v) } : {}) };
+          }));
+          setLoaded(true);
+        }, e => { if (!disposed) { setRows([]); setLoaded(true); setError(friendlyError(e)); } });
+      } catch (e) {
+        if (!disposed) { setRows([]); setLoaded(true); setError(friendlyError(e)); }
+      }
+    })();
+    return () => { disposed = true; unsubscribe(); };
+  }, [revision, setError]);
   return (
     <>
       <div className="page-heading">
@@ -1978,6 +2004,7 @@ function Admin() {
           are intentionally not editable by the browser.
         </p>
       </div>
+      <AdminLearningAnalytics rows={rows} loaded={loaded} />
     </>
   );
 }
@@ -2264,6 +2291,7 @@ export default function App() {
       board: <Board />,
       reflection: <Reflection />,
       journal: <Journal />,
+      reports: <LearningReportsPage />,
       village: <VillagePage />,
       friends: <Friends />,
       settings: <SettingsPage />,
@@ -2272,7 +2300,7 @@ export default function App() {
     };
     content = (
       <Shell>
-        {player.paused ? (
+        {player.paused && !["reports", "settings"].includes(page) ? (
           <Locked
             title="Time for a little check-in."
             text="Your parent has paused play. Have a conversation together, and come back when you’re ready."

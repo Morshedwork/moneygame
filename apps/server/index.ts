@@ -11,6 +11,7 @@ import {
 } from "../../packages/game-rules";
 import { leaveRoom, roomCommand } from "../../packages/game-rules/rooms";
 import { heroCompleted } from "../../packages/hero-lab";
+import { accountReport } from "../../packages/learning-report";
 initializeApp();
 const db = getFirestore();
 const fail = (message: string) => {
@@ -201,6 +202,7 @@ export const leadAction = onCall(
               paused: v.paused,
               phase: v.game?.phase || "learning",
               createdAt: v.createdAt,
+              ...(v.role === "student" ? { learningReport: accountReport(v as ReturnType<typeof publicPlayer>) } : {}),
             };
           }),
         };

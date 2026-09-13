@@ -6,6 +6,7 @@ import { BoardWorld, CharacterPortrait } from './World';
 import { DIE_MS, RollEvent, sampleRoll } from './board-presentation';
 import { useGame } from './store';
 import './quest-mission.css';
+import { MissionLearningReport } from './learning/LearningReports';
 
 const SAVE='lead-money-quest-v03-local';
 function load():Mission|null {try {const value=JSON.parse(localStorage.getItem(SAVE)||'null');return validSave(value)?value:null;}catch{return null;}}
@@ -57,6 +58,7 @@ export default function QuestMission() {
   return <div className="quest-app" data-reduced={reduced}>
     <header className="quest-header"><a href="/" className="quest-brand"><span>✦</span> LEAD <small>MONEY QUEST</small></a><nav aria-label="Mission tools"><button onClick={toggleMotion}>Motion: {reduced?'reduced':'full'}</button><button aria-pressed={voice} onClick={()=>{if(voice&&'speechSynthesis' in window)window.speechSynthesis.cancel();setVoice(!voice);setSpeaking(false);}}>Voice {voice?'on':'off'}</button><a href="/">Back to home</a></nav></header>
     <div className="quest-notice">Local practice • progress saved in this browser only • no child account or research upload • English prototype</div>
+    {g&&<MissionLearningReport mission={g}/>}
     {storageError&&<p role="alert" className="quest-error">Browser storage is unavailable. Progress cannot survive a refresh.</p>}
     {!g?<main className="quest-welcome"><div><span className="quest-kicker">FOUR QUARTERS. YOUR OWN STORY.</span><h1>A little stall.<br/>A lot to discover.</h1><p>Learn a money idea, run your business through the lantern-lit festival, notice what happens, then try a new plan. Your choices matter; your speed does not.</p><div className="quest-journey">Learn → plan → roll → decide → reflect</div><div className="quest-avatar-options">{mascots.map(m=><button key={m.id} aria-pressed={avatar===m.id} onClick={()=>setAvatar(m.id)} style={{borderColor:m.color}}>{m.name}<small>{m.role}</small></button>)}</div><label className="quest-field">Mission length<select value={length} onChange={e=>setLength(+e.target.value as 2|4)}><option value={4}>Four quarters · complete Money Quest</option><option value={2}>Two quarters · shorter practice</option></select></label><label className="quest-check"><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>Save my practice choices on this browser. Avoid personal information on shared devices.</label><button className="quest-primary" disabled={!consent} onClick={start}>Begin Money Quest</button><p className="quest-fine">Approved Friend Sessions need verified parent/teacher connections and a working backend. This mode is solo; no public matching or chat.</p></div><div className="quest-welcome-character"><CharacterPortrait name={avatar} animation="Wave"/></div></main>:<>
       <section className="quest-progress" aria-label="Quarter progress">{quarterNames.slice(0,g.quarters).map((name,i)=><div key={name} className={i+1===g.quarter?'active':i+1<g.quarter?'complete':''}><b>{i+1<g.quarter?'✓':`Q${i+1}`}</b><span>{name}</span></div>)}</section>
