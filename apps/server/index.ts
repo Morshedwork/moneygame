@@ -9,7 +9,7 @@ import {
   safeName,
   Player,
 } from "../../packages/game-rules";
-import { leaveRoom, roomCommand } from "../../packages/game-rules/rooms";
+import { leaveRoom, roomCommand, type Room } from "../../packages/game-rules/rooms";
 import { heroCompleted } from "../../packages/hero-lab";
 import { accountReport } from "../../packages/learning-report";
 initializeApp();
@@ -289,7 +289,7 @@ export const leadAction = onCall(
           const membership = (await tx.get(member)).data();
           if (!membership) fail("Join a room first.");
           const rr = db.doc("rooms/" + membership!.roomId);
-          const r = (await tx.get(rr)).data()!;
+          const r = (await tx.get(rr)).data() as Room;
           const docs = await Promise.all(
             r.members.map((id: string) => tx.get(db.doc("players/" + id))),
           );
