@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { canvasEvents } from "./canvas-events";
 import {
   ContactShadows,
   OrbitControls,
@@ -205,7 +206,7 @@ export function WorldPreview() {
   return (
     <SceneBoundary>
       <GraphicsFrame>
-      <Canvas
+      <Canvas events={canvasEvents}
         shadows
         dpr={[1, 1.5]}
         camera={{ position: [33, 29, 42], fov: 39 }}
@@ -255,7 +256,7 @@ export function CharacterPortrait({
   return (
     <SceneBoundary>
       <GraphicsFrame>
-      <Canvas
+      <Canvas events={canvasEvents}
         shadows
         dpr={[1, 1.5]}
         camera={{ position: [0, 1.75, 5.4], fov: 36 }}
@@ -348,7 +349,7 @@ export function BoardWorld({ roster = [], presentation, onReady, missionView }: 
   return (
     <SceneBoundary>
       <GraphicsFrame>
-      <Canvas
+      <Canvas events={canvasEvents}
         shadows
         dpr={[1, 1.5]}
         camera={{ position: [22, 32, 30], fov: 38 }}
@@ -622,7 +623,7 @@ export function VillageWorld({ onNear, paused = false, district = districts[0], 
   return (
     <SceneBoundary>
       <GraphicsFrame>
-      <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 6, 23], fov: 52 }}>
+      <Canvas events={canvasEvents} shadows dpr={[1, 1.5]} camera={{ position: [0, 6, 23], fov: 52 }}>
         <GraphicsPipeline />
         <Lighting night={district.night} />
         <Suspense

@@ -1,4 +1,4 @@
-import {test, expect, Page} from "@playwright/test";
+import {test, expect, Page} from "./fixtures";
 const riverItems = [
   {name: "Banana peel", bin: "Compost"}, {name: "Clean paper flyer", bin: "Paper"},
   {name: "Empty plastic bottle", bin: "Containers"}, {name: "Apple core", bin: "Compost"},
@@ -52,6 +52,7 @@ test("real drag-and-drop, wrong-bin retry, all six items and one reward across r
   await sortRemaining(page);
   await expect(page.getByLabel("Stamps awarded")).toHaveText("1");
   await expect(page.getByRole("button", {name: "Collect River Care stamp"})).toHaveCount(0);
+  await expect(page.getByRole("button", {name: "Play again", exact: true})).toBeFocused();
   expect(errors).toEqual([]);
 });
 

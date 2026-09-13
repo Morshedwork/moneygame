@@ -29,7 +29,7 @@ export function GraphicsFrame({ children }: { children: ReactNode }) {
   }
   return <div className="graphics-frame" ref={host} data-graphics={quality}>
     {children}
-    <details className="graphics-tools" hidden>
+    <details className="graphics-tools">
       <summary>Graphics</summary>
       <label>Render quality<select value={quality} onChange={e => { if (isGraphicsQuality(e.target.value)) setQuality(e.target.value); }}>
         <option value="balanced">Balanced · lighter GPU load</option>

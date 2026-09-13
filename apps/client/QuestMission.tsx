@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { applyAction, createMission, description, financialTotals, Mission, options, validSave, VERSION } from '../../packages/money-quest/engine';
+import { applyAction, createMission, description, financialTotals, Mission, options, shouldRestoreStoredMission, validSave, VERSION } from '../../packages/money-quest/engine';
 import { depositCopy, goals, lessonBeats, quarterNames, wordBank } from '../../packages/money-quest/content';
 import { boardNames, mascots } from '../../packages/curriculum';
 import { BoardWorld, CharacterPortrait } from './World';
@@ -25,7 +25,7 @@ export default function QuestMission() {
     if(lock.current||busy||!current.current)return;
     lock.current=true;
     try {
-      const other=load();if(other&&other.id===current.current.id&&other.receipts.length>current.current.receipts.length){current.current=other;setGame(other);setError('This mission changed in another tab. Its latest progress has been restored; please review it before choosing.');return;}
+      const other=load();if(other&&shouldRestoreStoredMission(current.current,other)){current.current=other;setGame(other);setError('This mission changed in another tab. Its latest progress has been restored; please review it before choosing.');return;}
       const old=current.current,result=applyAction(old,{id:id(),type,...data});
       if(result.animation!==old.animation){const resume=result.turn===old.turn;const event={id:String(result.animation),value:result.lastDie,from:old.position,path:result.path,replacement:false,started:performance.now()-(resume?DIE_MS:0)};setRoll(event);setElapsed(resume?DIE_MS:0);}
       else if(result.outcome?.die!==undefined&&result.outcome!==old.outcome){setRoll({id:id(),value:result.outcome.die,from:old.position,path:[],replacement:true,started:performance.now()});setElapsed(0);}

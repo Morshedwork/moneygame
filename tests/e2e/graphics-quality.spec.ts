@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 import { createMission, applyAction } from '../../packages/money-quest/engine';
 
 test('HQ Blender village, actual 4K framebuffer, quality switching and die remain functional', async ({page}) => {

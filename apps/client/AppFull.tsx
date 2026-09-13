@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, FormEvent, lazy, Suspense } from "react";
 import {
   ArrowUpRight,
   ArrowRight,
@@ -864,12 +864,25 @@ function Learning() {
   const [gateCursor, setGateCursor] = useState(p?.gate || 0);
   const [review, setReview] = useState(!!p?.rewarded);
   const [stage, setStage] = useState<"learn" | "practice">(
-    p?.lesson === lessons.length && (p?.gate || 0) > 0
+    !p?.rewarded && p?.lesson === lessons.length && (p?.gate || 0) > 0
       ? "practice"
       : "learn",
   );
   const [answered, setAnswered] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  const teachingHeadingRef = useRef<HTMLHeadingElement>(null);
+  const questionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const completionHeadingRef = useRef<HTMLHeadingElement>(null);
+  const completed = !!p && !review && p.rewarded;
+  useEffect(() => {
+    if (completed && answered) {
+      completionHeadingRef.current?.focus();
+      return;
+    }
+    const heading =
+      stage === "practice" ? questionHeadingRef.current : teachingHeadingRef.current;
+    heading?.focus();
+  }, [stage, cursor, gateCursor, completed, answered]);
   if (!p) return null;
   const isGate = !review && cursor >= lessons.length;
   const index = isGate ? gateCursor : cursor;
@@ -879,7 +892,6 @@ function Learning() {
     (item) =>
       item.terms as ReadonlyArray<readonly [string, string]>,
   );
-  const completed = !review && p.rewarded;
   if (completed && answered)
     return (
       <section className="lesson-complete">
@@ -887,7 +899,9 @@ function Learning() {
           <CharacterPortrait name="sparko" animation="Celebrate" />
         </div>
         <Chip>YOU UNDERSTOOD. YOU EARNED IT.</Chip>
-        <h1>Your first five coins.</h1>
+        <h1 ref={completionHeadingRef} tabIndex={-1}>
+          Your first five coins.
+        </h1>
         <p>
           You know the difference between money coming in and profit left over.
           Now it’s time to put your ideas into action.
@@ -941,7 +955,7 @@ function Learning() {
           {isGate
             ? stage === "learn"
               ? "LESSONS COMPLETE"
-              : `QUESTION ${Math.min(p.gate + 1, gate.length)} / ${gate.length}`
+              : `QUESTION ${Math.min(gateCursor + 1, gate.length)} / ${gate.length}`
             : `LESSON ${cursor + 1} / ${lessons.length}`}
         </span>
       </div>
@@ -967,7 +981,9 @@ function Learning() {
           </div>
           <div className="lesson-teaching">
             <Chip>{isGate ? "QUICK REVIEW" : lesson.concept}</Chip>
-            <h2>{isGate ? "Words worth knowing" : lesson.title}</h2>
+            <h2 ref={teachingHeadingRef} tabIndex={-1}>
+              {isGate ? "Words worth knowing" : lesson.title}
+            </h2>
             <p>
               {isGate
                 ? "Read through these meanings once more. The quiz asks you to use them in real money stories, not just memorise them."
@@ -1021,7 +1037,7 @@ function Learning() {
               {isGate ? "FINAL QUIZ" : review ? "REVISIT & PRACTICE" : "PRACTICE"}
             </Chip>
             {!isGate && <span className="practice-term">Use: {lesson.concept}</span>}
-            <h3>
+            <h3 ref={questionHeadingRef} tabIndex={-1}>
               {isGate
                 ? (question as (typeof gate)[number]).question
                 : (question as (typeof lessons)[number]).prompt}
@@ -1280,7 +1296,7 @@ function Board() {
                   .map((n) => (
                     <button
                       key={n}
-                      disabled={disabled}
+                      disabled={busy}
                       onClick={() => send("price", { price: n })}
                     >
                       {n === g.price ? "Keep" : `${n} coins`}

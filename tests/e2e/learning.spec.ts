@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("teaches the finance terms before practice and the final quiz", async ({
   page,
@@ -23,6 +23,7 @@ test("teaches the finance terms before practice and the final quiz", async ({
       .getByRole("button", { name: "Try a practice question", exact: true })
       .click();
     await expect(page.locator(".question-card")).toBeVisible();
+    await expect(page.locator(".question-card h3")).toBeFocused();
     await page.locator(".answer-options button").nth(answer).click();
     await page
       .getByRole("button", {
@@ -46,13 +47,27 @@ test("teaches the finance terms before practice and the final quiz", async ({
 
   for (const [questionIndex, answer] of [0, 1, 1].entries()) {
     await page.locator(".answer-options button").nth(answer).click();
-    if (questionIndex < 2)
+    if (questionIndex < 2) {
+      await expect(page.locator(".chapter-chip")).toHaveText(
+        `QUESTION ${questionIndex + 1} / 3`,
+      );
       await page
         .getByRole("button", { name: "Next question", exact: true })
         .click();
+    }
   }
 
   await expect(
     page.getByRole("heading", { name: "Your first five coins." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Your first five coins." }),
+  ).toBeFocused();
+
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
+  await page.getByRole("button", { name: "Learning", exact: true }).click();
+  await expect(page.locator(".question-card")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Try a practice question", exact: true }),
   ).toBeVisible();
 });

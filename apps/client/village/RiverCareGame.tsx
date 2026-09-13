@@ -186,7 +186,7 @@ export function RiverCareGame({earned, onComplete}: {earned: boolean; onComplete
 
     {finished && <div className="river-results">
       <div><Stamp size={26}/><div><h4>{claimed || earned ? "River Guardian stamp earned" : "You’re a River Guardian!"}</h4><p>{riverFirstTryCount(state)} of {riverItems.length} sorted on the first try. Every try helped the river.</p></div></div>
-      {claimed || earned ? <><p className="river-stamp-note">Your passport has one River Care stamp. Replays won’t add extra stamps or change your coins.</p><button className="button secondary" onClick={restart}><RotateCcw size={16}/> Play again</button></> : <button className="button primary" ref={claimButton} onClick={collectStamp}><Stamp size={17}/> Collect River Care stamp</button>}
+      {claimed || earned ? <><p className="river-stamp-note">Your passport has one River Care stamp. Replays won’t add extra stamps or change your coins.</p><button className="button secondary" ref={claimButton} onClick={restart}><RotateCcw size={16}/> Play again</button></> : <button className="button primary" ref={claimButton} onClick={collectStamp}><Stamp size={17}/> Collect River Care stamp</button>}
     </div>}
 
     <div className="river-game-tools">

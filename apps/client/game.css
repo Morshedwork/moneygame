@@ -1114,8 +1114,8 @@ textarea {
 }
 .term-definitions span,
 .quiz-term-review span {
-  color: var(--muted);
-  font-size: 11px;
+  color: #526a88;
+  font-size: 12px;
   line-height: 1.55;
 }
 .quiz-term-review {
@@ -1180,8 +1180,8 @@ textarea {
 .practice-term {
   display: block;
   margin-top: 14px;
-  color: #6c82a1;
-  font-size: 9px;
+  color: #4d6482;
+  font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.8px;
 }

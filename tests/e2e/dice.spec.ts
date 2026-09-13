@@ -1,4 +1,4 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect, Page } from "./fixtures";
 
 // Deterministic, unsaved practice fixtures only. No Firebase records or test backdoors.
 async function board(page: Page, overrides: Record<string, unknown> = {}) {
@@ -18,16 +18,25 @@ async function board(page: Page, overrides: Record<string, unknown> = {}) {
     useGame.setState({ practicePrivate: ready, player: publicPlayer(ready), page: "board", reduced: false, presenting: false });
   }, overrides);
   await expect(page.getByRole("button", { name: "Open business journal" })).toBeVisible();
+  if (Number(overrides.turn) > 0) {
+    await page.getByRole("button", { name: "Close card and look at board" }).click();
+  }
 }
 async function resetRng(page: Page) {
   await page.evaluate(async () => {
-    const modulePath = performance.getEntriesByType("resource").map(e => e.name).find(url => new URL(url).pathname === "/apps/client/store.ts")!;
+    const modulePath = "/apps/client/store.ts";
     const { useGame } = await import(modulePath);
     useGame.getState().practicePrivate.game.rng = 1972; // Current LCG produces a one, independently on both turns.
   });
 }
+async function pauseAnimationClock(page: Page) {
+  await expect(page.getByRole("button", { name: /^(Roll the die|Open decision card)$/ })).toBeEnabled({ timeout: 30000 });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+}
 test("die settles, pawn walks, repeated ones animate, remount does not replay", async ({ page }) => {
   await board(page);
+  await pauseAnimationClock(page);
   for (let tile = 1; tile <= 2; tile++) {
     await resetRng(page);
     await page.getByRole("button", { name: "Roll the die", exact: true }).click();
@@ -35,11 +44,14 @@ test("die settles, pawn walks, repeated ones animate, remount does not replay", 
     await expect(view).toHaveAttribute("data-roll-stage", "rolling");
     await expect(view).toHaveAttribute("data-pawn-tile", String(tile - 1));
     await expect(view).toHaveAttribute("data-die-value", "1");
+    await page.clock.runFor(720);
     await expect(view).toHaveAttribute("data-roll-stage", "walking");
-    await expect(page.locator(".decision-panel > .button").first()).toBeDisabled();
+    await expect(page.getByRole("button", { name: /^(Open decision card|Read event card)$/ })).toBeDisabled();
+    await page.clock.runFor(400);
     await expect(view).toHaveAttribute("data-roll-stage", "complete");
     await expect(view).toHaveAttribute("data-pawn-tile", String(tile));
     await expect(page.locator(".dice-caption")).toContainText("You rolled 1 · 1 space");
+    await page.getByRole("button", { name: "Close card and look at board" }).click();
   }
   await page.getByRole("button", { name: "Open business journal" }).click();
   await page.getByRole("button", { name: "My adventure", exact: true }).click();
@@ -48,18 +60,25 @@ test("die settles, pawn walks, repeated ones animate, remount does not replay", 
 });
 test("last roll stays on board until the pawn reaches Start", async ({ page }) => {
   await board(page, { position: 19, turn: 8, path: [18, 19], lastDie: 2 });
+  await pauseAnimationClock(page);
   await page.getByRole("button", { name: "Roll the die", exact: true }).click();
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "rolling");
   await expect(page.getByRole("heading", { name: "Look how far you’ve come." })).toHaveCount(0);
+  await page.clock.runFor(720);
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "walking");
+  await page.clock.runFor(400);
   await expect(page.getByRole("heading", { name: "Look how far you’ve come." })).toBeVisible();
 });
 test("replacement shows its own result and never moves the pawn", async ({ page }) => {
   await board(page, { position: 13, turn: 5, lastDie: 6, pending: "returns", wallet: 30, sales: [{ id: "test-sale", price: 6, cost: 3, returned: false }] });
-  await page.getByRole("button", { name: "Try a replacement · 3 coins" }).click();
+  await pauseAnimationClock(page);
+  await page.getByRole("button", { name: "Open decision card" }).click();
+  await page.getByRole("radio", { name: /Try a replacement · 3 coins/ }).check();
+  await page.getByRole("button", { name: "Try replacement & roll" }).click();
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "rolling");
   await expect(page.locator(".board-layout")).toHaveAttribute("data-die-value", "1");
   await expect(page.locator(".board-layout")).toHaveAttribute("data-pawn-tile", "13");
+  await page.clock.runFor(720);
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "complete");
   await expect(page.locator(".dice-caption")).toContainText("Replacement 1 · Stay on this space");
 });

@@ -157,7 +157,7 @@ export const gate = [
     ],
     answer: 1,
     explain:
-      "Start with 8 coins of revenue, then subtract the 6-coin production cost and the 3-coin refund: 8 − 6 − 3 = −1. Costs are 1 coin greater than revenue, so this is a 1-coin loss.",
+      "Start with 8 coins of revenue, then subtract the 6-coin production cost and the 3-coin refund: 8 − 6 − 3 = −1. Total money out is 1 coin greater than revenue, so this is a 1-coin loss.",
   },
   {
     question:

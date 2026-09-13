@@ -1,5 +1,6 @@
 import { Suspense, useLayoutEffect, useMemo, useRef } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
+import { canvasEvents } from '../canvas-events';
 import { Html, OrbitControls, useGLTF } from '@react-three/drei';
 import { CanvasTexture, Material, Mesh, MeshBasicMaterial, MeshStandardMaterial, OrthographicCamera, SRGBColorSpace } from 'three';
 import type { OrbitControls as OrbitType } from 'three-stdlib';
@@ -95,7 +96,7 @@ export default function ShopPreview({ name, price, color, avatar, roof, view, re
 }) {
   const quality = useGraphics(s => s.quality);
   return <SceneBoundary><GraphicsFrame>
-    <Canvas orthographic shadows camera={{ position: [10, 8.1, 16], zoom: 45, near: .1, far: 100 }}
+    <Canvas events={canvasEvents} orthographic shadows camera={{ position: [10, 8.1, 16], zoom: 45, near: .1, far: 100 }}
       gl={{ antialias: true, alpha: false }} aria-label={`Interactive 3D bento shop preview. ${shopViews[view].description}`}>
       <color attach="background" args={['#f1ebdf']} />
       <GraphicsPipeline />

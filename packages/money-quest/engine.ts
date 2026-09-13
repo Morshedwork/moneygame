@@ -70,6 +70,7 @@ function sales(g:Mission,count:number,discount=0,kind:'day'|'big'|'festival'|'ev
     b+=Number(g.upgrade)+Number(g.reinvest)+g.fx.quarterBudget+(g.saleBudget||0)+(day?g.fx.dayBudget:0)+(big?g.fx.bigBudget:0);
     for(const effect of g.budgetEffects||[])if(effect.left>0){b+=effect.amount;effect.left--;}
     if(g.fx.customers>0){b+=g.fx.customerBudget;g.fx.customers--;}
+    if(guaranteed)b=Math.max(b,price);
     budgets.push(b);
     if(b>=price) {sold++;revenue+=price;if(g.inventory>0)g.inventory--;else cost+=g.cost;g.sales.push({price,returned:false});}
   }
@@ -295,4 +296,15 @@ export function applyAction(original:Mission,a:Action):Mission {
 }
 export function replayMission(saved:Mission) {let result=createMission(saved.seed,saved.quarters,saved.avatar);result.started=saved.started;for(const e of saved.events)if(e.type==='action')result=applyAction(result,e.data.command as Action);return result;}
 export function financialTotals(g:Mission) {return g.ledger.reduce((t,e)=>({revenue:t.revenue+e.revenue,cost:t.cost+e.cost,wage:t.wage+e.wage,expenses:t.expenses+e.expense+e.refund,profit:t.profit+e.revenue-e.cost-e.wage-e.expense-e.refund}),{revenue:0,cost:0,wage:0,expenses:0,profit:0});}
-export function validSave(value:unknown):value is Mission {if(!value||typeof value!=='object')return false;const g=value as Mission;return g.version===VERSION&&typeof g.id==='string'&&[2,4].includes(g.quarters)&&Number.isInteger(g.quarter)&&g.quarter>=1&&g.quarter<=g.quarters&&Number.isInteger(g.wallet)&&g.wallet>=0&&Number.isInteger(g.position)&&g.position>=0&&g.position<20&&Array.isArray(g.events)&&Array.isArray(g.ledger)&&Array.isArray(g.receipts)&&!!g.helper&&!!g.fx&&!!g.lesson&&Array.isArray(g.lesson.complete)&&['lesson','deposit','banner','offers','board','decision','outcome','reflection','recovery','settlement','done'].includes(g.phase);}
+export function shouldRestoreStoredMission(current:Mission,stored:Mission) {
+  if(current.id!==stored.id)return false;
+  const shared=Math.min(current.receipts.length,stored.receipts.length);
+  const samePrefix=current.receipts.slice(0,shared).every((receipt,index)=>stored.receipts[index]===receipt);
+  return !samePrefix||stored.receipts.length>current.receipts.length;
+}
+export function validSave(value:unknown):value is Mission {
+  if(!value||typeof value!=='object')return false;
+  const g=value as Mission;
+  if(!(g.version===VERSION&&typeof g.id==='string'&&[2,4].includes(g.quarters)&&Number.isInteger(g.quarter)&&g.quarter>=1&&g.quarter<=g.quarters&&Number.isInteger(g.wallet)&&g.wallet>=0&&Number.isInteger(g.position)&&g.position>=0&&g.position<20&&Array.isArray(g.events)&&g.events.length<=5000&&Array.isArray(g.ledger)&&Array.isArray(g.receipts)&&!!g.helper&&!!g.fx&&!!g.lesson&&Array.isArray(g.lesson.complete)&&['lesson','deposit','banner','offers','board','decision','outcome','reflection','recovery','settlement','done'].includes(g.phase)))return false;
+  try{return JSON.stringify(replayMission(g))===JSON.stringify(g);}catch{return false;}
+}

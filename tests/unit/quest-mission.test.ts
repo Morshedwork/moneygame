@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {applyAction,createMission,financialTotals,Mission,options,replayMission} from '../../packages/money-quest/engine';
+import {applyAction,createMission,financialTotals,Mission,options,replayMission,shouldRestoreStoredMission,validSave} from '../../packages/money-quest/engine';
 import {fortunes,layerSize,lessonBeats} from '../../packages/money-quest/content';
 let serial=0;
 const act=(g:Mission,type:string,data:Record<string,unknown>={})=>applyAction(g,{id:`test-action-${++serial}`,type,...data});
@@ -40,4 +40,6 @@ describe('v0.3 four-quarter mission',()=>{
   it('limits Q4 allocations to five and never stakes protected savings',()=>{let g=launch();g.quarter=4;g.phase='offers';g.wallet=8;g.savings=20;const base={price:6,helper:'none',reason:'I compared the possible outcomes.'};expect(()=>act(g,'offers',{...base,save:3,stock:3})).toThrow(/at most 5/);g=act(g,'offers',{...base,save:2,stock:3});expect(g.savings).toBe(22);expect(g.allocations).toEqual({save:2,stock:3,reinvest:0});});
   it('requires a reason when declining a fortune',()=>{const g=launch();g.phase='decision';g.pending='fortune';g.card=12;expect(()=>act(g,'choose',{choice:'decline',reason:''})).toThrow(/reason/);});
   it('consumes per-customer improvements independently',()=>{let g=launch();g.wallet=20;g.phase='decision';g.pending='fortune';g.card=13;g=act(g,'choose',{choice:'accept',reason:'I considered packaging.'});g.phase='decision';g.pending='fortune';g.card=4;g=act(g,'choose',{choice:'accept',reason:'I noticed the compliment.'});g.phase='decision';g.pending='big';g.customerDeck=[4,4,4];g=act(g,'choose',{choice:'keep',reason:'Compare all three budgets.'});expect(g.outcome?.budgets).toEqual([6,5,4]);});
+  it('honours accepted large orders despite earlier budget penalties',()=>{let g=launch();g.phase='decision';g.pending='market';g.card=5;g.saleBudget=-1;g.budgetEffects=[{amount:-1,left:3}];g=act(g,'choose',{choice:'accept',reason:'The confirmed order fits my plan.'});expect(g.outcome).toMatchObject({budgets:[5,5,5],sales:3,revenue:15,cost:9});});
+  it('rejects malformed saves and detects equal-length cross-tab divergence',()=>{const base=launch(),valid=act(base,'roll',{turn:base.turn}),diverged=applyAction(base,{id:'diverged-action-1',type:'roll',turn:base.turn});expect(validSave(valid)).toBe(true);const malformed=structuredClone(valid) as Mission;delete (malformed.lesson as Partial<Mission['lesson']>).depth;expect(validSave(malformed)).toBe(false);expect(shouldRestoreStoredMission(base,valid)).toBe(true);expect(shouldRestoreStoredMission(valid,base)).toBe(false);expect(shouldRestoreStoredMission(valid,diverged)).toBe(true);});
 });

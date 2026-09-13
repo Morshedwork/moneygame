@@ -1,4 +1,4 @@
-import {test,expect,Page} from '@playwright/test';
+import {test,expect,Page} from './fixtures';
 import {createMission,applyAction} from '../../packages/money-quest/engine';
 const reason='I compared the cost with customer budgets and kept a buffer.';
 async function fillReasons(page:Page){for(const input of await page.locator('.quest-panel textarea').all())await input.fill(reason);}
@@ -80,4 +80,26 @@ test('v0.3 real Blender board loads, rolls once, and walks before unlocking the 
   const save=await page.evaluate(()=>JSON.parse(localStorage.getItem('lead-money-quest-v03-local')!));
   expect(save.turn).toBe(1);expect(save.lastDie).toBeGreaterThanOrEqual(1);expect(save.lastDie).toBeLessThanOrEqual(6);
   expect(save.position).toBe(save.lastDie);expect(errors).toEqual([]);
+});
+
+test('malformed local progress is ignored instead of crashing the mission',async({page})=>{
+  await page.addInitScript(()=>localStorage.setItem('lead-money-quest-v03-local',JSON.stringify({
+    version:'money-quest-v0.3-local-1',id:'practice-corrupt',quarters:4,quarter:1,
+    phase:'lesson',wallet:0,position:0,events:[],ledger:[],receipts:[],
+    helper:{},fx:{},lesson:{complete:[]},
+  })));
+  await page.goto('/mission');
+  await expect(page.getByRole('heading',{name:'A little stall. A lot to discover.'})).toBeVisible();
+});
+
+test('same-length progress from another tab is restored before a new action',async({page})=>{
+  const start=createMission(73),first=applyAction(start,{id:'tab-a-answer-1',type:'answer',answer:0});
+  const other=applyAction(start,{id:'tab-b-answer-1',type:'answer',answer:1});
+  await page.addInitScript(value=>localStorage.setItem('lead-money-quest-v03-local',JSON.stringify(value)),first);
+  await page.goto('/mission');
+  await expect(page.getByRole('button',{name:'Continue learning'})).toBeVisible();
+  await page.evaluate(value=>localStorage.setItem('lead-money-quest-v03-local',JSON.stringify(value)),other);
+  await page.getByRole('button',{name:'Continue learning'}).click();
+  await expect(page.getByRole('alert')).toContainText('changed in another tab');
+  expect(await page.evaluate(()=>JSON.parse(localStorage.getItem('lead-money-quest-v03-local')!).receipts)).toEqual(other.receipts);
 });

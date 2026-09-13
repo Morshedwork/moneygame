@@ -1,4 +1,4 @@
-import { test, expect, Page } from "@playwright/test";
+import { test, expect, Page } from "./fixtures";
 async function learn(page: Page) {
   await page.getByRole("button", { name: "Try practice", exact: true }).click();
   await page.getByRole("button", { name: "Meet Sparko & learn" }).click();
@@ -40,7 +40,7 @@ test("complete practice: learning → business → full quarter → reflection �
   page,
 }) => {
   const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("pageerror", (e) => errors.push(e.stack || e.message));
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Small steps. Big possibilities." }),
@@ -49,7 +49,7 @@ test("complete practice: learning → business → full quarter → reflection �
   await page.getByRole("button", { name: "Create my bento business" }).click();
   await page.getByLabel("Your business name").fill("Aki’s Bento");
   await page.getByRole("button", { name: "Open my business" }).click();
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 80; i++) {
     if (
       await page
         .getByRole("heading", { name: "Look how far you’ve come." })
@@ -58,16 +58,16 @@ test("complete practice: learning → business → full quarter → reflection �
       break;
     await page.locator('.board-layout[data-roll-stage="rolling"], .board-layout[data-roll-stage="walking"]').waitFor({ state: "hidden" });
     if (await page.getByRole("heading", { name: "Look how far you’ve come." }).count()) break;
+    const card = page.getByRole("dialog");
+    if (await card.isVisible()) {
+      await card.locator(".event-primary").click();
+      continue;
+    }
     let found = false;
     for (const pattern of [
       /^Roll the die$/,
       /^Keep price/,
-      /^Save 0 coins$/,
-      /^Contribute 0 coins$/,
-      /^0 coins →/,
-      /^Give a fair refund$/,
-      /^Keep my coins$/,
-      /^A moment to reflect$/,
+      /^Open decision card$/,
     ]) {
       const button = page.getByRole("button", { name: pattern });
       if (await button.count()) {
@@ -92,9 +92,10 @@ test("complete practice: learning → business → full quarter → reflection �
     );
   await page.getByRole("button", { name: "Step into Yatai Village" }).click();
   await expect(
-    page.getByRole("heading", { name: "Yatai Village", exact: true }),
+    page.getByRole("heading", { name: "Stay curious. Wander a little.", exact: true }),
   ).toBeVisible();
   await expect(page.locator('.explore-canvas canvas[data-ready="true"]')).toBeVisible({ timeout: 30000 });
+  await page.locator('.explore-canvas canvas').click();
   await page.keyboard.down("w");
   try {
     await expect(

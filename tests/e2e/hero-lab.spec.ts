@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect, Page } from './fixtures';
 import { heroUnits, strengths, jobs, goalSteps, storySteps, observations, improvements, audiences, needs, offers, brandColorNames } from '../../packages/hero-lab';
 
 async function radio(page: Page, legend: string, option: string) {
