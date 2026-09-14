@@ -256,7 +256,7 @@ export function applyAction(original:Mission,a:Action):Mission {
     if(g.quarter>=3){check(['none','helper','benefit'].includes(String(a.helper)),'Choose your helper arrangement.');g.helper.hired=a.helper!=='none';if(a.helper==='benefit'&&!g.helper.benefit){pay(g,2,'Helper reliability benefit');g.helper.benefit=true;}}
     if(g.quarter===4){const save=number(a.save,0,5),stake=number(a.stock,0,3),reinvest=a.reinvest===true?3:0;check(save+stake+reinvest<=5,'Allocate at most 5 coins across money paths.');check(save+stake+reinvest<=g.wallet,'Keep allocations within your wallet.');if(save)entry(g,'transfer','Money path: Save',-save,save);if(reinvest){pay(g,3,'Money path: Reinvest');g.reinvest=true;}g.allocations={save,stock:stake,reinvest};if(stake){const r=stock(g,stake);event(g,'boundary-stock',{die:r.value,returned:r.back});}}
     event(g,'boundary-choice',{reason:why,price,upgrade:g.upgrade,helper:{...g.helper},allocations:{...g.allocations}});moveRemainder(g);
-  } else if(a.type==='roll') {
+  } else if(a.type==='roll'||a.type==='roll-dice') {
     check(g.phase==='board','Finish the current step before rolling.');check(a.turn===g.turn,'This roll is stale; the turn has already moved.');
     check(g.wallet>0,'Choose a recovery plan before rolling.');if(g.fx.repair){pay(g,g.fx.repair,'Delayed repair obligation',true);g.fx.repair=0;}
     g.lastDie=die(g,'movement');g.turn++;g.animation++;g.revision=false;const end=g.position+g.lastDie;
@@ -297,7 +297,9 @@ export function applyAction(original:Mission,a:Action):Mission {
 export function replayMission(saved:Mission) {let result=createMission(saved.seed,saved.quarters,saved.avatar);result.started=saved.started;for(const e of saved.events)if(e.type==='action')result=applyAction(result,e.data.command as Action);return result;}
 export function financialTotals(g:Mission) {return g.ledger.reduce((t,e)=>({revenue:t.revenue+e.revenue,cost:t.cost+e.cost,wage:t.wage+e.wage,expenses:t.expenses+e.expense+e.refund,profit:t.profit+e.revenue-e.cost-e.wage-e.expense-e.refund}),{revenue:0,cost:0,wage:0,expenses:0,profit:0});}
 export function shouldRestoreStoredMission(current:Mission,stored:Mission) {
-  if(current.id!==stored.id)return false;
+  // This is one shared browser save slot. A replacement mission in another tab
+  // must win too, otherwise an old tab can overwrite the newly started practice.
+  if(current.id!==stored.id||current.started!==stored.started)return true;
   const shared=Math.min(current.receipts.length,stored.receipts.length);
   const samePrefix=current.receipts.slice(0,shared).every((receipt,index)=>stored.receipts[index]===receipt);
   return !samePrefix||stored.receipts.length>current.receipts.length;

@@ -1,0 +1,25 @@
+{
+  "generator": "tools/blender/build_board_village.py",
+  "objectsBeforeBatching": 2439,
+  "materialBatches": 40,
+  "triangles": 205949,
+  "boundsBlender": {
+    "min": [
+      -31.88487434387207,
+      -26.0,
+      -3.0416100025177
+    ],
+    "max": [
+      34.355411529541016,
+      39.063724517822266,
+      8.35200023651123
+    ]
+  },
+  "note": "Y-up browser coordinates. Central counter at (0,1.25), river at z=-18.1. Entirely modeled 3D; no photographic planes.",
+  "centralStallsBrowserZShift": 2.5,
+  "shiftedComponents": 429,
+  "shiftedVertices": 19066,
+  "foregroundPropsBrowserZShift": 1.65,
+  "foregroundShiftedComponents": 157,
+  "foregroundShiftedVertices": 7008
+}

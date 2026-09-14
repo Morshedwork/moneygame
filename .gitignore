@@ -6,6 +6,7 @@ dist/
 *.log
 .firebase/
 .runtime/
+.gstack/
 test-results/
 playwright-report/
 .playwright-mcp/

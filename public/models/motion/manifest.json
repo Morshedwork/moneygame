@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "blender": "5.2.1 LTS",
+  "characters": {
+    "lido": {
+      "file": "/models/motion/lido.glb",
+      "rigScale": 0.8399999737739563,
+      "clips": {
+        "Walk": {
+          "seconds": 1.0,
+          "stride": 1.1,
+          "stance": 0.62
+        },
+        "Run": {
+          "seconds": 0.7,
+          "stride": 1.8,
+          "stance": 0.44
+        }
+      },
+      "bytes": 27924
+    },
+    "prena": {
+      "file": "/models/motion/prena.glb",
+      "rigScale": 0.8399999737739563,
+      "clips": {
+        "Walk": {
+          "seconds": 1.0,
+          "stride": 1.1,
+          "stance": 0.62
+        },
+        "Run": {
+          "seconds": 0.7,
+          "stride": 1.8,
+          "stance": 0.44
+        }
+      },
+      "bytes": 27644
+    },
+    "oty": {
+      "file": "/models/motion/oty.glb",
+      "rigScale": 0.8399999737739563,
+      "clips": {
+        "Walk": {
+          "seconds": 1.0,
+          "stride": 1.1,
+          "stance": 0.62
+        },
+        "Run": {
+          "seconds": 0.7,
+          "stride": 1.8,
+          "stance": 0.44
+        }
+      },
+      "bytes": 27780
+    },
+    "diva": {
+      "file": "/models/motion/diva.glb",
+      "rigScale": 0.8399999737739563,
+      "clips": {
+        "Walk": {
+          "seconds": 1.0,
+          "stride": 1.1,
+          "stance": 0.62
+        },
+        "Run": {
+          "seconds": 0.7,
+          "stride": 1.8,
+          "stance": 0.44
+        }
+      },
+      "bytes": 27776
+    },
+    "sparko": {
+      "file": "/models/motion/sparko.glb",
+      "rigScale": 1.0,
+      "clips": {
+        "Walk": {
+          "seconds": 1.0,
+          "stride": 1.1,
+          "stance": 0.62
+        },
+        "Run": {
+          "seconds": 0.7,
+          "stride": 1.8,
+          "stance": 0.44
+        }
+      },
+      "bytes": 27456
+    }
+  }
+}

@@ -32,9 +32,10 @@ test('twelve guidebook units: lessons, real activities, retries, keepsakes and f
   await open(page);
   await expect(page.locator('.hl-unit')).toHaveCount(12);
   await expect(page.locator('.hl-unit').nth(1)).toBeDisabled();
-  await expect(page.locator('.hl-mentor canvas')).toBeVisible();
+  await expect(page.locator('.hl-mentor canvas')).toHaveAttribute('data-character-renderer', '3d');
+  await expect(page.locator('.hl-mentor').getByRole('img', { name: 'Oty interactive 3D character', exact: true })).toBeVisible();
   await expect(page.locator('.hl-mentor .scene-loading')).toHaveCount(0, { timeout: 45000 });
-  await page.screenshot({ path: 'docs/screenshots/runtime/hero-lab-passport.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('hero-lab-passport.png'), fullPage: true });
   await page.getByRole('button', { name: 'Begin my learning trail' }).click();
   await radio(page, heroUnits[0].question, heroUnits[0].options[0]);
   await page.getByRole('button', { name: 'Check my understanding' }).click();
@@ -94,7 +95,7 @@ test('twelve guidebook units: lessons, real activities, retries, keepsakes and f
         await page.getByRole('checkbox', { name: 'Check the sign without colour' }).check();
         await expect(page.locator('.hl-brand-preview')).toHaveClass(/grayscale/);
         await expect(page.locator('.hl-brand-preview')).toContainText('Water station this way');
-        await page.screenshot({ path: 'docs/screenshots/runtime/hero-lab-brand-studio.png', fullPage: true });
+        await page.screenshot({ path: test.info().outputPath('hero-lab-brand-studio.png'), fullPage: true });
         break;
       case 'money':
         await page.getByRole('spinbutton', { name: 'Sign', exact: true }).fill('2');
@@ -118,7 +119,7 @@ test('twelve guidebook units: lessons, real activities, retries, keepsakes and f
   await expect(page.locator('.hl-keepsake')).toContainText('Sketch a water sign');
   await expect(page.locator('.hl-keepsake')).toContainText('Support: A trusted adult, with permission');
   await expect(page.locator('.hl-keepsake')).toContainText('Review: What helped visitors?');
-  await page.screenshot({ path: 'docs/screenshots/runtime/hero-lab-complete.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('hero-lab-complete.png'), fullPage: true });
   await page.getByRole('button', { name: 'See my complete passport' }).click();
   await expect(page.getByText('12 / 12 stamps', { exact: true })).toBeVisible();
   await expect(page.locator('.hl-unit.done')).toHaveCount(12);
@@ -151,7 +152,7 @@ test('mobile and keyboard: accessible activities, bonus memory, challenge wheel,
   for (const s of [strengths[0], strengths[1], strengths[4]]) await page.getByRole('checkbox', { name: s, exact: true }).check();
   await radio(page, 'Your festival job', jobs[0]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.screenshot({ path: 'docs/screenshots/runtime/hero-lab-mobile.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('hero-lab-mobile.png'), fullPage: true });
   await stamp(page, 0);
   await page.getByRole('button', { name: 'Back to my passport' }).click();
   await expect(page.getByText('1 / 12 stamps', { exact: true })).toBeVisible();

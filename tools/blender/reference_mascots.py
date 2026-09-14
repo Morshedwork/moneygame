@@ -8,8 +8,9 @@ import bpy, bmesh
 from mathutils import Vector
 from mathutils.geometry import tessellate_polygon
 
-COLORS = {'lido':'f96366','prena':'52a7da','oty':'ffde00','diva':'6dba32','sparko':'238fcb'}
-ACCENTS = {'lido':'bf252c','prena':'075a91','oty':'eea009','diva':'478d1c','sparko':'075a91'}
+# Sampled from the supplied full-body PNGs, rather than the UI theme palette.
+COLORS = {'lido':'f76665','prena':'50a6dd','oty':'ffd800','diva':'6bbc3b','sparko':'238fcb'}
+ACCENTS = {'lido':'c12525','prena':'035393','oty':'ef9b0f','diva':'459122','sparko':'075a91'}
 
 def linear(hex_value):
     def channel(v):
@@ -21,7 +22,15 @@ def bezier(a,b,c,d,count=12):
     return [tuple((1-t)**3*a[k]+3*(1-t)**2*t*b[k]+3*(1-t)*t*t*c[k]+t**3*d[k] for k in (0,1)) for t in [i/count for i in range(count)]]
 
 def build_mascot(api,name):
+    if name in ['lido','prena','oty','diva']:
+        from source_mascots import build_source_mascot
+        return build_source_mascot(api,name)
     api.clear()
+    reference = name != 'sparko'
+    body_width = 1.32 if reference else 1
+    body_height = 1.40 if reference else 1
+    head_rise = 1.48 * (body_height - 1)
+    model_scale = .84 if reference else 1
     def material(label,color):
         m=api.mat(label,linear(color))
         p=m.node_tree.nodes.get('Principled BSDF')
@@ -29,9 +38,9 @@ def build_mascot(api,name):
         p.inputs['Specular IOR Level'].default_value=.16
         return m
     skin=material('Skin',COLORS[name]); dark=material('Shadow accent',ACCENTS[name])
-    white=material('Warm white','fffef9'); black=material('Midnight eyes','070909')
-    palette={k:material('Crown '+k,v) for k,v in [('blue','52a7da'),('green','6dba32'),('coral','f96366'),('yellow','ffde00')]}
-    gold=material('Golden accent','eea009')
+    white=material('Warm white','ffffff'); black=material('Midnight eyes','000000')
+    palette={k:material('Crown '+k,v) for k,v in [('blue','50a6dd'),('green','6bbc3b'),('coral','f76665'),('yellow','ffd800')]}
+    gold=material('Golden accent','ef9b0f')
     parts={k:[] for k in ['body','head','eye.L','eye.R','mouth']}
     def add(b,o):
         parts[b].append(o)
@@ -55,11 +64,12 @@ def build_mascot(api,name):
     head_center=(0,2.00,0);head_radii=(.69,.65,.48)
     # Rounded continuous body, out-turned feet and mitten thumbs. Voxel union
     # removes intersecting primitive seams before a weighted skin is created.
-    body_pieces=[api.sphere('Torso sculpt',(0,1.01,0),(.37,.60,.275),skin,24,16),api.sphere('Hip sculpt',(0,.67,0),(.36,.28,.26),skin,20,12)]
+    torso_width = .41 if reference else .37
+    body_pieces=[api.sphere('Torso sculpt',(0,1.01,0),(torso_width,.60,.275),skin,32,20),api.sphere('Hip sculpt',(0,.67,0),(.40 if reference else .36,.28,.26),skin,24,16)]
     for sign in (-1,1):
         o=api.sphere('Flared leg sculpt',(sign*.35,.40,0),(.215,.47,.245),skin,20,12)
         o.rotation_euler.y=-sign*.40;body_pieces.append(o)
-        body_pieces.append(api.sphere('Soft outward foot',(sign*.51,.15,.065),(.245,.16,.275),skin,20,12))
+        body_pieces.append(api.sphere('Soft outward foot',(sign*(.58 if reference else .51),.15,.065),(.27 if reference else .245,.16,.275),skin,24,16))
         o=api.sphere('Tapered arm sculpt',(sign*.48,1.13,0),(.105,.35,.14),skin,20,12)
         o.rotation_euler.y=-sign*.52;body_pieces.append(o)
         body_pieces.append(api.sphere('Mitten palm',(sign*.65,.87,.01),(.105,.12,.13),skin,16,10))
@@ -69,7 +79,7 @@ def build_mascot(api,name):
     bpy.context.view_layer.objects.active=body_pieces[0];bpy.ops.object.join()
     body=bpy.context.object;body.name='Continuous soft silhouette'
     bpy.ops.object.transform_apply(location=True,rotation=True,scale=True)
-    remesh=body.modifiers.new('Seamless sculpt union','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.045;remesh.use_smooth_shade=True
+    remesh=body.modifiers.new('Seamless sculpt union','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.036;remesh.use_smooth_shade=True
     bpy.ops.object.modifier_apply(modifier=remesh.name)
     smooth=body.modifiers.new('Soft mascot finish','SMOOTH');smooth.factor=.7;smooth.iterations=5
     bpy.ops.object.modifier_apply(modifier=smooth.name)
@@ -77,13 +87,24 @@ def build_mascot(api,name):
     bpy.ops.object.modifier_apply(modifier=sub.name)
     for p in body.data.polygons:p.use_smooth=True
     if name!='sparko':
-        add('body',patch('Diagonal chest accent',[(-.19,1.48),(.23,1.48),(-.28,.99)],(0,1.01,0),(.37,.60,.275),dark,.012))
+        add('body',patch('Diagonal chest accent',[(-.22,1.48),(.27,1.48),(-.30,.89)],(0,1.01,0),(torso_width,.60,.275),dark,.012))
     add('head',api.sphere('Signature round head',head_center,head_radii,skin,40,28))
-    for x,side in [(-.265,'L'),(.265,'R')]:
-        add('eye.'+side,api.sphere('Eye white '+side,(x,2.08,.435),(.126,.151,.044),white,24,16))
-        add('eye.'+side,api.sphere('Round black pupil '+side,(x,2.08,.471),(.103,.116,.022),black,24,16))
-    add('head',api.sphere('Small round nose',(0,1.94,.482),(.038,.040,.019),dark,16,10))
-    width={'lido':.24,'prena':.185,'oty':.158,'diva':.168,'sparko':.20}[name]
+    eye_x = .355 if reference else .265
+    for x,side in [(-eye_x,'L'),(eye_x,'R')]:
+        if reference:
+            # Curved, modeled eye surfaces follow the head all the way around;
+            # the black centers and white rims are geometry, never image decals.
+            for label,rx,ry,m,depth in [('Eye white ',.095,.112,white,.012),('Round black pupil ',.081,.084,black,.024)]:
+                outline=[(x+rx*math.cos(a*math.tau/48),2.08+ry*math.sin(a*math.tau/48)) for a in range(48)]
+                eye=patch(label+side,outline,head_center,head_radii,m,depth)
+                solid=eye.modifiers.new('Rounded eye depth','SOLIDIFY');solid.thickness=.012
+                bpy.context.view_layer.objects.active=eye;bpy.ops.object.modifier_apply(modifier=solid.name)
+                add('eye.'+side,eye)
+        else:
+            add('eye.'+side,api.sphere('Eye white '+side,(x,2.08,.435),(.126,.151,.044),white,24,16))
+            add('eye.'+side,api.sphere('Round black pupil '+side,(x,2.08,.471),(.103,.116,.022),black,24,16))
+    add('head',api.sphere('Small round nose',(0,1.99 if reference else 1.94,.482),(.034,.036,.019),dark,20,12))
+    width={'lido':.255,'prena':.175,'oty':.148,'diva':.130,'sparko':.20}[name]
     # Scalloped white smiles echo each mascot's original artwork, not a generic
     # open-mouth emoji. Fine tooth divisions remain subtle at gameplay scale.
     w=width;y=1.77
@@ -97,7 +118,10 @@ def build_mascot(api,name):
             add('mouth',patch('Tooth separation',[(x-.004,y-.009),(x+.004,y-.009),(x+.033,y-.135),(x+.025,y-.135)],head_center,head_radii,tooth,.014))
     # Each fringe is its own recognizable silhouette, projected onto the head.
     if name=='lido':
-        fringe=[(-.40,2.31),(-.30,2.57),(-.12,2.69),(-.10,2.59),(.27,2.48),(.05,2.43),(-.03,2.39),(.06,2.55)]
+        fringe=bezier((-.43,2.19),(-.42,2.44),(-.32,2.62),(-.11,2.77))
+        fringe += [(-.09,2.64),(.18,2.59),(.43,2.47),(.19,2.47)]
+        fringe += bezier((.19,2.47),(.10,2.48),(-.05,2.29),(-.08,2.32))
+        fringe += [(.01,2.52),(-.43,2.19)]
     elif name=='oty':
         fringe=[(-.29,2.43),(-.20,2.64),(-.30,2.75),(-.08,2.62),(.18,2.61),(.07,2.55),(.27,2.43),(.27,2.25),(.12,2.34),(.04,2.18),(-.07,2.39)]
     elif name=='diva':
@@ -112,27 +136,40 @@ def build_mascot(api,name):
     else:
         fringe=[(-.46,2.44),(-.45,2.72),(-.23,2.60),(-.13,2.93),(.01,2.75),(.29,2.93),(.20,2.64),(.48,2.79),(.34,2.43)]
     # Outside the sphere, the tip remains sculptural with a shallow bevel.
+    if name=='diva':fringe=[(x*.77,y) for x,y in fringe]
+    if name=='prena':fringe=[(x*.90,y) for x,y in fringe]
     crest=patch('Signature sculpted forelock',fringe,head_center,head_radii,dark if name!='sparko' else palette['blue'],.025)
     solid=crest.modifiers.new('Sculpted fringe depth','SOLIDIFY');solid.thickness=.030
     bpy.context.view_layer.objects.active=crest;bpy.ops.object.modifier_apply(modifier=solid.name)
     add('head',crest)
     if name=='lido':
-        bulb=material('Idea bulb','fff14a');bulb.node_tree.nodes.get('Principled BSDF').inputs['Emission Color'].default_value=(*linear('ffe449'),1);bulb.node_tree.nodes.get('Principled BSDF').inputs['Emission Strength'].default_value=.25
+        bulb=material('Idea bulb','fcf459')
+        filament=material('Looped lightbulb filament','fed05b')
+        stalk=material('Charcoal bulb stem','57535b')
+        def tube(label,points,m,radius=.006):
+            curve=bpy.data.curves.new(label,'CURVE');curve.dimensions='3D';curve.bevel_depth=radius;curve.bevel_resolution=3
+            spline=curve.splines.new('BEZIER');spline.bezier_points.add(len(points)-1)
+            for p,point in zip(spline.bezier_points,points):
+                p.co=api.at(point);p.handle_left_type='AUTO';p.handle_right_type='AUTO'
+            o=bpy.data.objects.new(label,curve);bpy.context.collection.objects.link(o)
+            bpy.ops.object.select_all(action='DESELECT');o.select_set(True);bpy.context.view_layer.objects.active=o
+            bpy.ops.object.convert(target='MESH');return api.finish(bpy.context.object,label,m)
         for sign in [-1,1]:
-            x=sign*.63
-            add('head',api.beam('Idea stalk',(sign*.47,2.40,-.025),(x,2.67,-.025),.042,black))
-            add('head',api.sphere('Lightbulb glass',(x,2.81,-.025),(.145,.18,.11),bulb,24,16))
-            add('head',api.sphere('Bulb neck',(x-sign*.018,2.665,-.025),(.075,.08,.072),bulb))
-            for dx in [-.035,.035]:add('head',api.beam('Bulb filament',(x,2.72,.075),(x+dx,2.84,.077),.009,gold))
-            for dx,dy in [(-.14,.18),(0,.24),(.14,.18)]:
-                add('head',api.beam('Idea ray',(x+dx,2.84+dy,-.025),(x+dx*1.18,2.84+dy*1.18,-.025),.012,palette['yellow']))
+            x=sign*.66;cy=2.66
+            add('head',api.beam('Idea stalk',(sign*.49,2.36,-.025),(x,cy-.14,-.025),.042,stalk))
+            add('head',api.sphere('Lightbulb glass',(x,cy,-.025),(.153,.175,.11),bulb,32,20))
+            add('head',api.sphere('Bulb neck',(x-sign*.025,cy-.145,-.025),(.075,.08,.072),bulb))
+            path=[(-.02,-.11),(-.06,-.02),(-.066,.09),(-.018,.095),(-.019,.02),(.025,-.003),(.068,.05),(.047,.095),(.021,.085),(.025,-.015),(.065,-.10)]
+            add('head',tube('Looped filament',[(x+dx,cy+dy,.084) for dx,dy in path],filament))
+            for dx,dy,color in [(-.20,.075,'blue'),(-.115,.235,'coral'),(.175,.205,'green'),(-.205,-.11,'yellow')]:
+                add('head',tube('Multicolored '+color+' idea ray',[(x+dx,cy+dy,-.025),(x+dx*1.24,cy+dy*1.24,-.025)],palette[color],.006))
     elif name=='oty':
-        for sign in [-1,1]:add('head',api.star('Large yellow crown star',sign*.49,2.56,-.09,.27,palette['yellow']))
+        for sign in [-1,1]:add('head',api.star('Large yellow crown star',sign*.49,2.48,-.09,.27,palette['yellow']))
         for x,y,color in [(-.76,2.68,'blue'),(-.53,2.91,'green'),(.53,2.91,'coral'),(.78,2.68,'yellow')]:
             add('head',api.beam('Orange star stem',(x*.67,2.5,-.075),(x,y,-.075),.019,gold))
             add('head',api.star('Small '+color+' crown star',x,y,-.075,.115,palette[color]))
     elif name=='prena':
-        for x,y,r,color in [(-.69,2.48,.16,'green'),(-.44,2.66,.23,'blue'),(.39,2.67,.23,'coral'),(.68,2.48,.16,'yellow')]:
+        for x,y,r,color in [(-.69,2.39,.16,'green'),(-.44,2.54,.23,'blue'),(.39,2.55,.23,'coral'),(.68,2.39,.16,'yellow')]:
             # One annular gear mesh, with a real open center and radial teeth.
             verts=[];n=64
             layer=-.09 if color in ['green','yellow'] else .025
@@ -164,11 +201,21 @@ def build_mascot(api,name):
         add('body',api.text('LEAD hoodie','LEAD',(0,1.17,.27),.16,white))
         add('body',api.sphere('Hood',(0,1.49,-.08),(.40,.16,.28),dark))
         for x in [-.12,.12]:add('body',api.beam('Drawstring',(x,1.43,.22),(x,1.23,.29),.012,white))
+    # Restore the reference's tall, broad body proportions before rigging. Bake
+    # the modeled surfaces, retaining full front/back thickness at every angle.
+    for key,objects in {'body':[body]+parts['body'], **{k:v for k,v in parts.items() if k!='body'}}.items():
+        for o in objects:
+            bpy.ops.object.select_all(action='DESELECT');o.select_set(True);bpy.context.view_layer.objects.active=o
+            bpy.ops.object.transform_apply(location=True,rotation=True,scale=True)
+            for v in o.data.vertices:
+                if key=='body':v.co.x*=body_width;v.co.z*=body_height
+                else:v.co.z+=head_rise
     # Bone-local Y follows the length of a bone. All bones use vertical rest
     # axes so local-Y translations are world-up and local-Z raises an arm.
     bpy.ops.object.armature_add();rig=bpy.context.object;rig.name=name+'_Rig'
     bpy.ops.object.mode_set(mode='EDIT');bones=rig.data.edit_bones;bones.remove(bones[0])
-    pivots={'root':(0,0,0),'body':(0,.72,0),'head':(0,1.48,0),'arm.L':(-.32,1.40,0),'arm.R':(.32,1.40,0),'leg.L':(-.22,.74,0),'leg.R':(.22,.74,0),'eye.L':(-.265,2.08,.435),'eye.R':(.265,2.08,.435),'mouth':(0,1.71,.45)}
+    pivots={'root':(0,0,0),'body':(0,.72,0),'head':(0,1.48,0),'arm.L':(-.32,1.40,0),'arm.R':(.32,1.40,0),'leg.L':(-.22,.74,0),'leg.R':(.22,.74,0),'eye.L':(-eye_x,2.08,.435),'eye.R':(eye_x,2.08,.435),'mouth':(0,1.71,.45)}
+    pivots={k:(x,y+head_rise,z) if k.startswith('eye') or k=='mouth' else (x*body_width,y*body_height,z) for k,(x,y,z) in pivots.items()}
     for key,pos in pivots.items():
         bone=bones.new(key);bone.head=api.at(pos);bone.tail=api.at((pos[0],pos[1]+.20,pos[2]))
     for key in pivots:
@@ -183,7 +230,7 @@ def build_mascot(api,name):
         modifier=o.modifiers.new('LEAD deform rig','ARMATURE');modifier.object=rig;o.parent=rig
     weights={key:[] for key in ['body','arm.L','arm.R','leg.L','leg.R']}
     for v in body.data.vertices:
-        x,y,z=v.co.x,v.co.z,-v.co.y;side='L' if x<0 else 'R'
+        x,y,z=v.co.x/body_width,v.co.z/body_height,-v.co.y;side='L' if x<0 else 'R'
         # Diagonal shoulder seam follows the anatomy, not a vertical x stripe.
         # A stripe drags the waist into a raised arm and creates a sharp wing.
         seam=.32-.30*(y-1.20)
@@ -194,7 +241,10 @@ def build_mascot(api,name):
     bind(body,weights)
     for key,objects in parts.items():
         for o in objects:bind(o,{key:[1]*len(o.data.vertices)})
-    rig['reference_design']=name.title()+' / supplied LEAD guidebook';rig['art_revision']=2
+    rig.scale=(model_scale,)*3
+    rig['reference_design']=name.title()+' / supplied LEAD guidebook';rig['art_revision']=3
+    rig['geometry']='Fully volumetric modeled surfaces, no image planes or textures'
+    rig['reference_body_proportions']=[body_width,body_height]
     rig.animation_data_create();scene=bpy.context.scene;scene.render.fps=24;scene.frame_start=1;scene.frame_end=49
     for anim in api.ANIMS:
         action=bpy.data.actions.new(anim);rig.animation_data.action=action

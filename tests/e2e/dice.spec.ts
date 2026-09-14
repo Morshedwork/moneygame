@@ -1,4 +1,5 @@
 import { test, expect, Page } from "./fixtures";
+import { DIE_HOLD_MS, DIE_MS, DIE_ROLL_MS, STEP_MS } from "../../apps/client/board-presentation";
 
 // Deterministic, unsaved practice fixtures only. No Firebase records or test backdoors.
 async function board(page: Page, overrides: Record<string, unknown> = {}) {
@@ -34,6 +35,13 @@ async function pauseAnimationClock(page: Page) {
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
 }
+async function advanceAnimationClock(page: Page, milliseconds: number) {
+  for (let remaining = milliseconds; remaining > 0;) {
+    const frame = Math.min(50, remaining);
+    await page.clock.runFor(frame);
+    remaining -= frame;
+  }
+}
 test("die settles, pawn walks, repeated ones animate, remount does not replay", async ({ page }) => {
   await board(page);
   await pauseAnimationClock(page);
@@ -44,10 +52,10 @@ test("die settles, pawn walks, repeated ones animate, remount does not replay", 
     await expect(view).toHaveAttribute("data-roll-stage", "rolling");
     await expect(view).toHaveAttribute("data-pawn-tile", String(tile - 1));
     await expect(view).toHaveAttribute("data-die-value", "1");
-    await page.clock.runFor(720);
+    await advanceAnimationClock(page, DIE_MS + 20);
     await expect(view).toHaveAttribute("data-roll-stage", "walking");
     await expect(page.getByRole("button", { name: /^(Open decision card|Read event card)$/ })).toBeDisabled();
-    await page.clock.runFor(400);
+    await advanceAnimationClock(page, STEP_MS + 60);
     await expect(view).toHaveAttribute("data-roll-stage", "complete");
     await expect(view).toHaveAttribute("data-pawn-tile", String(tile));
     await expect(page.locator(".dice-caption")).toContainText("You rolled 1 · 1 space");
@@ -58,15 +66,47 @@ test("die settles, pawn walks, repeated ones animate, remount does not replay", 
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "complete");
   await expect(page.locator(".board-layout")).toHaveAttribute("data-pawn-tile", "2");
 });
+test("background time cannot skip the tumble, result hold, or walk", async ({ page }) => {
+  await board(page);
+  await pauseAnimationClock(page);
+  await resetRng(page);
+  const view = page.locator(".board-layout");
+  const canvas = page.locator(".board-canvas canvas");
+  await page.getByRole("button", { name: "Roll the die", exact: true }).click();
+  await expect(view).toHaveAttribute("data-roll-stage", "rolling");
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.clock.fastForward(60_000);
+  await expect(view).toHaveAttribute("data-roll-stage", "rolling");
+  await expect(view).toHaveAttribute("data-pawn-tile", "0");
+  await expect(canvas).toHaveAttribute("data-die-progress", "0.0000");
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await advanceAnimationClock(page, 100);
+  await expect(view).toHaveAttribute("data-roll-stage", "rolling");
+  await advanceAnimationClock(page, DIE_ROLL_MS);
+  await expect(canvas).toHaveAttribute("data-die-progress", "1.0000");
+  await expect(view).toHaveAttribute("data-roll-stage", "rolling");
+  await expect(view).toHaveAttribute("data-pawn-tile", "0");
+  await advanceAnimationClock(page, DIE_HOLD_MS + 40);
+  await expect(view).toHaveAttribute("data-roll-stage", "walking");
+  await advanceAnimationClock(page, STEP_MS + 60);
+  await expect(view).toHaveAttribute("data-roll-stage", "complete");
+  await expect(view).toHaveAttribute("data-pawn-tile", "1");
+});
 test("last roll stays on board until the pawn reaches Start", async ({ page }) => {
   await board(page, { position: 19, turn: 8, path: [18, 19], lastDie: 2 });
   await pauseAnimationClock(page);
   await page.getByRole("button", { name: "Roll the die", exact: true }).click();
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "rolling");
   await expect(page.getByRole("heading", { name: "Look how far you’ve come." })).toHaveCount(0);
-  await page.clock.runFor(720);
+  await advanceAnimationClock(page, DIE_MS + 20);
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "walking");
-  await page.clock.runFor(400);
+  await advanceAnimationClock(page, STEP_MS + 60);
   await expect(page.getByRole("heading", { name: "Look how far you’ve come." })).toBeVisible();
 });
 test("replacement shows its own result and never moves the pawn", async ({ page }) => {
@@ -78,7 +118,7 @@ test("replacement shows its own result and never moves the pawn", async ({ page 
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "rolling");
   await expect(page.locator(".board-layout")).toHaveAttribute("data-die-value", "1");
   await expect(page.locator(".board-layout")).toHaveAttribute("data-pawn-tile", "13");
-  await page.clock.runFor(720);
+  await advanceAnimationClock(page, DIE_MS + 20);
   await expect(page.locator(".board-layout")).toHaveAttribute("data-roll-stage", "complete");
   await expect(page.locator(".dice-caption")).toContainText("Replacement 1 · Stay on this space");
 });

@@ -1,0 +1,123 @@
+{
+  "id": "yatai-reference-board",
+  "generator": "tools/blender/build_reference_board.py",
+  "tileTop": 0.305,
+  "tileSize": 3.94,
+  "boardNames": [
+    "Start",
+    "Sales Day",
+    "Omikuji",
+    "Bank",
+    "Big Sale",
+    "Festival Plaza",
+    "Sales Day",
+    "Market Change",
+    "Omikuji",
+    "Advertising",
+    "Town Hall",
+    "Sales Day",
+    "Omikuji",
+    "Returns",
+    "Big Sale",
+    "Sparko\u2019s Bench",
+    "Sales Day",
+    "Market Change",
+    "Omikuji",
+    "Bank"
+  ],
+  "positions": [
+    [
+      -10,
+      10
+    ],
+    [
+      -10,
+      6
+    ],
+    [
+      -10,
+      2
+    ],
+    [
+      -10,
+      -2
+    ],
+    [
+      -10,
+      -6
+    ],
+    [
+      -10,
+      -10
+    ],
+    [
+      -6,
+      -10
+    ],
+    [
+      -2,
+      -10
+    ],
+    [
+      2,
+      -10
+    ],
+    [
+      6,
+      -10
+    ],
+    [
+      10,
+      -10
+    ],
+    [
+      10,
+      -6
+    ],
+    [
+      10,
+      -2
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      6
+    ],
+    [
+      10,
+      10
+    ],
+    [
+      6,
+      10
+    ],
+    [
+      2,
+      10
+    ],
+    [
+      -2,
+      10
+    ],
+    [
+      -6,
+      10
+    ]
+  ],
+  "benchSeat": [
+    10,
+    0.911,
+    9.55
+  ],
+  "asset": {
+    "id": "yatai-reference-board",
+    "file": "/models/yatai-reference-board.glb",
+    "source": "assets/source/blender/yatai-reference-board.blend",
+    "triangles": 101876,
+    "bytes": 4687752,
+    "animations": []
+  }
+}

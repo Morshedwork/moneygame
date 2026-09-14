@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useThree } from '@react-three/fiber';
-import { ACESFilmicToneMapping, MeshStandardMaterial, PCFSoftShadowMap, PMREMGenerator, SRGBColorSpace } from 'three';
+import { ACESFilmicToneMapping, NoToneMapping, MeshStandardMaterial, PCFSoftShadowMap, PMREMGenerator, SRGBColorSpace } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { isGraphicsQuality, renderPixelRatio, useGraphics } from './graphics-quality';
 import './graphics.css';
@@ -46,7 +46,7 @@ export function GraphicsFrame({ children }: { children: ReactNode }) {
 }
 
 /** Shared by every real-time canvas. No downloaded HDR, texture CDN, or API key. */
-export function GraphicsPipeline({ portrait = false }: { portrait?: boolean }) {
+export function GraphicsPipeline({ portrait = false, neutral = false }: { portrait?: boolean; neutral?: boolean }) {
   const { gl, scene, camera, size, setDpr, invalidate } = useThree();
   const quality = useGraphics(s => s.quality);
   useEffect(() => {
@@ -70,20 +70,23 @@ export function GraphicsPipeline({ portrait = false }: { portrait?: boolean }) {
     gl.domElement.dataset.quality = quality;
     gl.domElement.dataset.renderSize = `${Math.floor(size.width*dpr)}x${Math.floor(size.height*dpr)}`;
     gl.outputColorSpace = SRGBColorSpace;
-    gl.toneMapping = ACESFilmicToneMapping;
-    gl.toneMappingExposure = 1.04;
+    // Restrained white portrait lights keep direct sRGB output in range without
+    // a filmic curve shifting the source palette. Village lighting is unchanged.
+    gl.toneMapping = neutral ? NoToneMapping : ACESFilmicToneMapping;
+    gl.toneMappingExposure = neutral ? 1 : 1.04;
+    gl.domElement.dataset.colorMode = neutral ? 'neutral' : 'cinematic';
     gl.shadowMap.type = PCFSoftShadowMap;
     invalidate();
-  }, [gl, size.width, size.height, setDpr, quality, portrait, invalidate]);
+  }, [gl, size.width, size.height, setDpr, quality, portrait, neutral, invalidate]);
   useEffect(() => {
     const generator = new PMREMGenerator(gl), room = new RoomEnvironment();
     const target = generator.fromScene(room, .04);
     const previous = scene.environment, intensity = scene.environmentIntensity;
     scene.environment = target.texture;
-    scene.environmentIntensity = portrait ? .42 : .22;
+    scene.environmentIntensity = neutral ? .06 : portrait ? .42 : .22;
     room.dispose(); generator.dispose();
     return () => { scene.environment = previous; scene.environmentIntensity = intensity; target.dispose(); };
-  }, [gl, scene, portrait]);
+  }, [gl, scene, portrait, neutral]);
   return null;
 }
 

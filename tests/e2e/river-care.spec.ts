@@ -39,14 +39,14 @@ test("real drag-and-drop, wrong-bin retry, all six items and one reward across r
   await page.mouse.up();
   await expect(game).toHaveAttribute("data-sorted", "1");
   await expect(peel).toHaveCount(0);
-  await page.screenshot({path: "node_modules/.cache/river-care-playing.png", fullPage: true});
+  await page.screenshot({path: test.info().outputPath("river-care-playing.png"), fullPage: true});
   await sortRemaining(page);
   await expect(game).toHaveAttribute("data-state", "complete");
   await expect(page.locator(".river-results")).toContainText("5 of 6 sorted on the first try");
   await expect(page.getByRole("progressbar", {name: "River cleanup"})).toHaveAttribute("value", "6");
   await page.getByRole("button", {name: "Collect River Care stamp"}).click();
   await expect(page.getByLabel("Stamps awarded")).toHaveText("1");
-  await page.screenshot({path: "node_modules/.cache/river-care-complete.png", fullPage: true});
+  await page.screenshot({path: test.info().outputPath("river-care-complete.png"), fullPage: true});
   await page.getByRole("button", {name: "Play again", exact: true}).click();
   await expect(game).toHaveAttribute("data-sorted", "0");
   await sortRemaining(page);
@@ -97,7 +97,7 @@ test.use({viewport: {width: 390, height: 844}, hasTouch: true, isMobile: true, r
 test("mobile tap gameplay and reduced motion fit the modal", async ({page}) => {
   await page.goto("/tests/fixtures/river-care.html?earned=1");
   await expect(page.getByRole("button", {name: "Pick up banana peel", exact: true})).toBeVisible();
-  await page.screenshot({path: "node_modules/.cache/river-care-mobile.png", fullPage: true});
+  await page.screenshot({path: test.info().outputPath("river-care-mobile.png"), fullPage: true});
   const modalSize = await page.locator(".v-modal").evaluate(element => ({scroll: element.scrollWidth, client: element.clientWidth}));
   expect(modalSize.scroll, JSON.stringify(modalSize)).toBeLessThanOrEqual(modalSize.client + 1);
   expect(await page.locator(".river-fish").evaluate(element => getComputedStyle(element).animationName)).toBe("none");

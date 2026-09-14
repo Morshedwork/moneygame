@@ -15,7 +15,8 @@
     "blender:headless": "node tools/blender/headless.mjs",
     "blender:props": "node tools/blender/headless.mjs tools/blender/build_props.py",
     "blender:characters": "node tools/blender/headless.mjs tools/blender/refine_characters.py",
-    "blender:render": "node tools/blender/headless.mjs tools/blender/render_characters.py",
+    "blender:render": "node tools/blender/headless.mjs tools/blender/build_character_studio.py",
+    "blender:validate-characters": "node tools/validation/character-3d.mjs",
     "blender:validate": "node tools/validation/assets.mjs"
   },
   "dependencies": {

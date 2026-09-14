@@ -2,6 +2,16 @@
 
 A browser-based financial learning adventure: animated lessons, a Bento business, a 20-space first quarter, reflections, and an explorable Yatai Village.
 
+The `/mission` experience keeps its animated 3D board visible while Sparko teaches
+through a short conversation beside it. Roll the dice to move 1–6 spaces, then
+resolve the business event where you land. The seeded rules engine supplies the
+same result to the visible die, pawn movement, and saved journal. Replacement and
+stock chance rolls do not move the pawn. Unused movement at Start resumes after
+the next quarter's lesson and planning, without another roll. Existing dice
+journals remain replayable. Parent reports are available on request from Mission
+tools. See the [reference board guide](docs/REFERENCE_BOARD.md) for turn flow,
+save compatibility, and assets.
+
 ## Run
 
 ```sh
@@ -30,11 +40,11 @@ See [architecture](docs/ARCHITECTURE.md), [rules and provisional balancing](docs
 
 ## Blender assets
 
-`tools/blender/build_assets.py` generates actual geometry, armature rigs, eighteen named animation clips for each of five mascots, source `.blend` files, GLB exports, collision bounds, and a manifest. No reference-image billboards stand in for 3D assets.
+`tools/blender/build_assets.py` generates the village and props. `npm run blender:characters` runs `refine_characters.py`, which dispatches through `reference_mascots.py` to `source_mascots.py` for Lido, Prena, Oty, and Diva. `reference_pixels.py` measures the supplied PNGs to retain their front outlines, proportions, and colors. The builder adds rounded depth and closed backs, uses vertex colors for the original body panels, and adds modeled faces and crowns from `reference_face.py`. These are rigged 3D meshes used for portraits, board pawns, shopkeepers, and village characters. Sparko retains its original 3D model.
 
-Set `BLENDER_PATH` to a Blender executable and run `npm run blender:build`. This workstation also has a headless Blender-module fallback documented in the implementation report. `npm run blender:validate` checks source files, GLB meshes, skins, clips, and size budgets.
+Editable individual `.blend` files are in `assets/source/blender`; the game loads their GLB exports from `public/models`. `npm run blender:render` assembles the editable studio at `assets/source/blender/LEAD-characters-3D.blend` and renders front and turnaround views. `npm run blender:validate-characters` checks the character exports. Set `BLENDER_PATH` to a Blender executable when needed; this workstation also has the headless Blender-module fallback documented in the implementation report. `npm run blender:validate` checks the broader asset set.
 
-The supplied Lido, Prena, Oty, and Diva illustrations guide their color, face, and crown details. Sparko is an original blue mentor with a cyan crest and LEAD hoodie.
+The 16 supplied PNGs retain their original pixels in `public/characters/source` as design references; identifying export metadata is removed before public serving. The models preserve the supplied front design while adding volume; their appearance changes with viewing angle and 3D lighting. Portraits start in the standing pose on the character-selection screen and use neutral white lighting with preserved Blender materials. Drag the interactive WebGL canvas to inspect the model from another angle. The same GLBs provide walking, talking, celebrating, and sitting animation. Versioned model URLs fetch updated exports, and a failed model load offers a retry without losing learning or board progress.
 
 ## Structure
 

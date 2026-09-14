@@ -25,7 +25,7 @@ for (const width of [375, 768, 1024, 1440]) {
     await page.getByRole('button', { name: 'Parent', exact: true }).click();
     await expect(page.getByLabel('Your name', { exact: true })).toBeVisible();
     await checkLayout();
-    await page.screenshot({ path: `.runtime/auth-signup-${width}.png`, fullPage: true });
+    await page.screenshot({ path: test.info().outputPath(`auth-signup-${width}.png`), fullPage: true });
     await page.locator('.auth-switch').getByRole('button', { name: 'Log in', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Welcome back.' })).toBeVisible();
     await checkLayout();

@@ -27,12 +27,12 @@ test('learning report updates after feedback, exports real evidence, and fits mo
     expect(contents).toContain('Correct after practice'); expect(contents).toContain('50%');
     expect(contents).toContain('Current practice session');
   }
-  await page.screenshot({ path: '.runtime/learning-report-desktop.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('learning-report-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('.sidebar')).not.toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
   await expect(page.getByRole('button', { name: 'Download report', exact: true })).toBeVisible();
-  await page.screenshot({ path: '.runtime/learning-report-mobile.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('learning-report-mobile.png'), fullPage: true });
   await page.getByRole('button', { name: 'Open village report', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Village learning passport', exact: true })).toBeVisible();
   await expect(page.locator('.lr-local .lr-report')).toContainText('Answer accuracy');
@@ -45,12 +45,20 @@ test('Money Quest exposes its own local report, including quarterly reflections'
   const g = applyAction(initial, { id: 'test-report-answer', type: 'answer', answer: (beat.answer + 1) % beat.choices.length });
   await page.addInitScript(g => localStorage.setItem('lead-money-quest-v03-local', JSON.stringify(g)), g);
   await page.goto('/mission');
-  await page.getByRole('button', { name: 'Learning report', exact: true }).click();
+  await expect(page.locator('.lr-report')).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Your village game board' })).toBeVisible();
+  await page.locator('.play-menu summary').click();
+  await page.getByRole('button', { name: 'Parent learning report', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Money Quest learning report', exact: true })).toBeVisible();
   await expect(page.locator('.lr-report')).toContainText('not linked to a child account');
   await expect(page.getByRole('region', { name: 'Quarter-by-quarter learning' }).locator('tbody tr')).toHaveCount(2);
   await expect(page.locator('.lr-metric').nth(1)).toContainText('0%');
-  await page.screenshot({ path: '.runtime/learning-report-mission.png', fullPage: true });
+  await page.screenshot({ path: test.info().outputPath('learning-report-mission.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Back to my board', exact: true }).click();
+  await expect(page.locator('.lr-report')).toHaveCount(0);
+  await expect(page.locator('.quest-game-layout')).toHaveAttribute('data-phase', 'lesson');
+  await expect(page.getByRole('button', { name: 'Continue learning', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('lead-money-quest-v03-local')!))).toEqual(g);
 });
 
 test('admin cohort filters and exports use only matching students; missing reports stay unknown', async ({ page }) => {
